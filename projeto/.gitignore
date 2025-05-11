@@ -1,0 +1,27 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Bytecode e cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configurações do VSCode
+.vscode/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Logs e temporários
+*.log
+*.tmp
+
+# Banco de dados SQLite (se houver)
+*.sqlite3
+
+# Arquivos de ambiente
+.env
