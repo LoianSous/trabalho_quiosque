@@ -1,0 +1,33 @@
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" INTEGER NOT NULL UNIQUE,
+	"username" VARCHAR NOT NULL,
+	"passphase" VARCHAR NOT NULL,
+	"u_state" VARCHAR NOT NULL,
+	"dt_create" DATETIME NOT NULL,
+	"dt_update" DATETIME NOT NULL,
+	PRIMARY KEY("id"),
+	FOREIGN KEY ("id") REFERENCES "file_tracking"("user_id")
+	ON UPDATE NO ACTION ON DELETE NO ACTION,
+	FOREIGN KEY ("id") REFERENCES "alw_acess"("user_id")
+	ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS "file_tracking" (
+	"id" INTEGER NOT NULL UNIQUE,
+	"user_id" INTEGER NOT NULL,
+	"filename" VARCHAR NOT NULL,
+	"file" BLOB NOT NULL,
+	"dt_create" DATETIME NOT NULL,
+	"dt_update" DATETIME NOT NULL,
+	PRIMARY KEY("id")
+);
+
+CREATE TABLE IF NOT EXISTS "alw_acess" (
+	"ip" INTEGER NOT NULL UNIQUE,
+	"user_id" INTEGER NOT NULL,
+	"locale" VARCHAR NOT NULL,
+	"state" VARCHAR NOT NULL DEFAULT 'ALLOWED',
+	"dt_create" DATETIME NOT NULL,
+	"dt_update" DATETIME NOT NULL,
+	PRIMARY KEY("ip")
+);

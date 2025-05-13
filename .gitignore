@@ -21,7 +21,7 @@ Thumbs.db
 *.tmp
 
 # Banco de dados SQLite (se houver)
-*.sqlite3
+*.db
 
 # Arquivos de ambiente
 .env
