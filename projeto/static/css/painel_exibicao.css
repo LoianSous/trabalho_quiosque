@@ -18,7 +18,7 @@ aside {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   min-width: 220px;
 }
 
@@ -234,6 +234,43 @@ body {
   font-style: italic;
   margin-top: 0.3rem;
 }
+
+.calendario {
+  width: 100%;
+  max-width: 180px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: black;
+}
+
+#calendario {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+#calendario th {
+  color: #00693e;
+  padding-bottom: 0.3rem;
+}
+
+#calendario td {
+  padding: 0.2rem;
+  border-radius: 4px;
+}
+
+#calendario td.dia-hoje {
+  background-color: #00693e;
+  color: white;
+  font-weight: bold;
+}
+
+
+
+
 
 
 

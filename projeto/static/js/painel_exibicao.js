@@ -71,3 +71,37 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("descricao").textContent = "Não foi possível carregar o clima";
     });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const diasContainer = document.getElementById("dias");
+  const mesAno = document.getElementById("mesAno");
+
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = hoje.getMonth(); 
+  const diaHoje = hoje.getDate();
+
+  const nomesMeses = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  mesAno.textContent = `${nomesMeses[mes]} ${ano}`;
+
+  const primeiroDia = new Date(ano, mes, 1).getDay(); 
+  const totalDias = new Date(ano, mes + 1, 0).getDate();
+
+  let html = "<tr>";
+  for (let i = 0; i < primeiroDia; i++) {
+    html += "<td></td>";
+  }
+
+  for (let dia = 1; dia <= totalDias; dia++) {
+    const classe = dia === diaHoje ? "dia-hoje" : "";
+    html += `<td class="${classe}">${dia}</td>`;
+    if ((dia + primeiroDia) % 7 === 0) html += "</tr><tr>";
+  }
+  html += "</tr>";
+
+  diasContainer.innerHTML = html;
+});
