@@ -16,3 +16,17 @@
 #     db.session.add(user)
 #     db.session.commit()
 #     return jsonify({'id': user.id, 'name': user.name, 'email': user.email}), 201
+from prosecco import main
+from flask import render_template
+
+@prosecco.route('/')
+def painel():
+    return render_template('painel_exibicao.html')
+
+@prosecco.route('/login')
+def login():
+    return render_template('painel_login.html')
+
+@prosecco.route('/adm')
+def adm():
+    return render_template('painel_adm.html')

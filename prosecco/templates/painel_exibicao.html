@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel IFMS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel_exibicao.css') }}" />
+  <script src="{{ url_for('static', filename='js/painel_exibicao.js') }}" defer></script>
+</head>
+
+<body>
+  <div class="layout-container">
+    <aside>
+      <div class="has-text-centered mb-5">
+        <div class="logo-box logo-ifms">
+          <img src="{{ url_for('static', filename='img/ifmslogo.png') }}" alt="Logo IFMS" />
+        </div>
+        <p class="mt-2 has-text-weight-bold is-size-6">INSTITUTO</p>
+        <p class="has-text-weight-bold is-size-6">FEDERAL</p>
+        <p class="is-size-7">Mato Grosso do Sul</p>
+      </div>
+
+      <div class="calendario mt-4">
+  <table id="calendario">
+    <thead>
+      <tr>
+        <th colspan="7" id="mesAno">Mês Ano</th>
+      </tr>
+      <tr>
+        <th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
+      </tr>
+    </thead>
+    <tbody id="dias"></tbody>
+  </table>
+</div>
+
+
+
+      <div class="campus-info has-text-centered mt-4">
+        <div class="flag-box mb-2">
+          <img src="{{ url_for('static', filename='img/bandeiratrl.jpg') }}" alt="Bandeira de Três Lagoas" />
+        </div>
+        <p class="campus-name">Campus Três Lagoas</p>
+      </div>
+    </aside>
+
+    <main class="is-flex is-flex-direction-column is-align-items-center is-justify-content-start has-background-white py-4 px-2">
+      <div class="is-flex is-align-items-center mb-4">
+        <i class="fas fa-clock mr-4" style="font-size: 5rem; color: #00693e;"></i>
+        <p id="clock" class="clock-time">--:--:--</p>
+      </div>
+
+      <div class="content-area">
+        <img src="{{ url_for('static', filename='img/noticia (2).png') }}" alt="Imagem principal"
+          style="width: 100%; border-radius: 10px;" />
+      </div>
+    </main>
+
+    <aside>
+      <div class="mb-5">
+        <p><i class="fas fa-school mr-2"></i> IFMS - Três Lagoas</p>
+        <p><i class="fas fa-map-marker-alt mr-2"></i> R. Ângelo Melão, 790</p>
+      </div>
+
+      <div id="clima" class="has-text-centered mb-4">
+        <div class="mb-1">
+          <i class="fas fa-thermometer-half fa-2x" style="color: white;"></i>
+        </div>
+        <p id="temperatura" class="temperatura-grande">--°C</p>
+        <div class="mt-1">
+          <i id="icone-clima" class="fas fa-cloud-sun fa-lg" style="color: white;"></i>
+        </div>
+        <p id="descricao" class="descricao-clima">Carregando clima...</p>
+      </div>
+
+      <div class="footer-logo has-text-centered">
+        <div class="logo-text">D.L.V</div>
+        <p>© 2025 IFMS - TADS-4</p>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>
