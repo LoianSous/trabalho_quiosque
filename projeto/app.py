@@ -10,5 +10,9 @@ def painel():
 def login():
     return render_template('painel_login.html')
 
+@app.route('/adm')
+def adm():
+    return render_template('painel_adm.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
