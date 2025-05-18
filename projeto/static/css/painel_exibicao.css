@@ -173,20 +173,16 @@ body {
 .logo-text {
   font-size: 2.5rem;
   font-weight: 900;
-  letter-spacing: 0.2rem;
-  background: linear-gradient(270deg, #00cba9, #2040f8, #cb00b7, #1affff);
-  background-size: 600% 600%;
-
+  letter-spacing: 0.15rem;
+  background: linear-gradient(270deg, #a8f0c6, #7ee0b0, #92f2ce, #a8f0c6);
+  background-size: 400% 400%;
   -webkit-background-clip: text;
   background-clip: text;
-
   -webkit-text-fill-color: transparent;
-  -webkit-text-fill-color: transparent;
-
-  animation: gradientShift 6s ease infinite;
-  margin-bottom: 0.5rem;
+  animation: gradientShift 12s ease infinite;
+  margin-bottom: 0.3rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); 
 }
-
 
 @keyframes gradientShift {
   0% {
