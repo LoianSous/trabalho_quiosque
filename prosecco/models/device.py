@@ -1,9 +1,9 @@
 from prosecco.config.database import db
 from prosecco.config.types import Device_state
 
-class Allow_ip(db.Model):
+class Device(db.Model):
     
-    __tablename__ = 'Allowed_ips'
+    __tablename__ = 'devices'
     
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String(128), nullable=False)
@@ -13,4 +13,4 @@ class Allow_ip(db.Model):
     dt_created = db.Column(db.Integer, default=db.func.strftime('%s', 'now')) 
     dt_updated = db.Column(db.Integer, default=db.func.strftime('%s', 'now'), onupdate=db.func.strftime('%s', 'now'))
 
-    relationship = db.relationship('User', back_populates='allowed_ips')
+    relationship = db.relationship('User', back_populates='devices')
