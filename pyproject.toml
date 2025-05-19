@@ -24,6 +24,9 @@ dependencies = [
 requires = ['poetry-core>=2.0.0,<3.0.0']
 build-backend = 'poetry.core.masonry.api'
 
+[tool.poetry.scripts]
+flask = "flask.cli:main"
+
 [tool.taskipy.tasks]
 run = 'flask --app prosecco/main run --debug'
 db = 'flask --app prosecco/main db'
