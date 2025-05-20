@@ -6,8 +6,8 @@ from prosecco.models import User
 
 login_auth = Blueprint('login_auth', __name__)
 
-@limiter.limit("5 per hour")
 @login_auth.route('/login/auth', methods=['POST'])
+@limiter.limit("5 per hour")
 def auth():
     user_id = request.form.get('id')
     passphrase = request.form.get('passphrase')
