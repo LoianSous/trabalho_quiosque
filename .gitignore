@@ -1,0 +1,16 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+*.env
+__pycache__/
+*.py[cod]
+*$py.class
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.db
+instance
