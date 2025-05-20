@@ -1,71 +1,79 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Painel IFMS</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma.min.css') }}">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/painel_login.css') }}">
 </head>
-
 <body class="has-background-light is-flex is-flex-direction-column" style="min-height: 100vh;">
 
-    <header class="header-login">
+<header class="header-login">
   <div class="logo-box-ifms is-flex is-align-items-center">
-    <img src="{{ url_for('static', filename='img/ifmslogo.png') }}" alt="Logo IFMS" />
+    <img src="{{ url_for('static', filename='img/ifmslogo.png') }}" alt="Logo IFMS">
     <div class="logo-subtext ml-3">
       <p class="if-bold">Instituto Federal</p>
       <p class="if-estado">Mato Grosso do Sul</p>
     </div>
   </div>
-
   <h1 class="header-title">Acesse a página de controle!</h1>
 </header>
 
-
-    <main class="section is-flex-grow-1 is-flex is-justify-content-center is-align-items-center">
-        <div class="box" style="width: 100%; max-width: 400px;">
-            <h1 class="title is-4 has-text-success has-text-centered">Login</h1>
-            <form>
-                <div class="field">
-                    <label class="label">Usuário</label>
-                    <div class="control">
-                        <input class="input" type="text" placeholder="Digite seu usuário">
-                    </div>
+<main class="section is-flex-grow-1 is-flex is-justify-content-center is-align-items-center">
+    <div class="box" style="width: 100%; max-width: 400px;">
+        <h1 class="title is-4 has-text-success has-text-centered">Login</h1>
+        <form onsubmit="event.preventDefault(); Login();">
+            <div class="field">
+                <label class="label">Usuário (E-mail)</label>
+                <div class="control">
+                    <input class="input" type="text" id="usuario" placeholder="Digite seu e-mail">
                 </div>
+            </div>
 
-                <div class="field">
-                    <label class="label">Senha</label>
-                    <div class="control">
-                        <input class="input" type="password" placeholder="Digite sua senha">
-                    </div>
+            <div class="field">
+                <label class="label">Senha</label>
+                <div class="control">
+                    <input class="input" type="password" id="senha" placeholder="Digite sua senha">
                 </div>
+            </div>
 
-                <div class="field is-flex is-justify-content-space-between is-align-items-center mb-4">
-                    <label class="checkbox">
-                        <input type="checkbox"> Lembrar de mim
-                    </label>
-                    <a href="#" class="is-size-7 has-text-success">Esqueceu a senha?</a>
-                </div>
+            <div class="field">
+                <button class="button is-success is-fullwidth">Entrar</button>
+            </div>
+        </form>
 
-                <div class="field">
-                    <button class="button is-success is-fullwidth">Entrar</button>
-                </div>
-            </form>
-
+        <div id="mensagem" class="has-text-centered has-text-danger mt-3">
+            {% if error %} {{ error }} {% endif %}
         </div>
-    </main>
+    </div>
+</main>
 
-    <footer class="footer-login has-text-white has-text-centered">
+<footer class="footer-login has-text-white has-text-centered">
   <div class="logo-text">D.L.V</div>
   <p>© 2025 IFMS - Campus Três Lagoas - TADS-4</p>
 </footer>
 
+<script>
+async function Login() {
+    const usuario = document.getElementById("usuario").value;
+    const senha = document.getElementById("senha").value;
 
+    const response = await fetch('/login/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id: usuario, passphrase: senha })
+    });
 
+    const data = await response.json();
+
+    if (data.success) {
+        window.location.href = data.redirect_url;  // navega para a página do painel
+    } else {
+        document.getElementById("mensagem").innerHTML = data.error;
+    }
+}
+</script>
 </body>
-
 </html>

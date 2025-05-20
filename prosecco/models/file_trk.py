@@ -1,5 +1,5 @@
-from prosecco.config.database import db
-from prosecco.config.types import File_state
+from prosecco.config import db
+from prosecco.config import File_state
 
 class File_trk(db.Model):
     __tablename__ = 'files_trk'

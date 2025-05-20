@@ -1,5 +1,5 @@
-from prosecco.config.database import db
-from prosecco.config.types import Device_state
+from prosecco.config import db
+from prosecco.config import Device_state
 
 class Device(db.Model):
     

@@ -1,5 +1,5 @@
-from prosecco.config.database import db
-from prosecco.config.types import User_type, User_state
+from prosecco.config import db
+from prosecco.config import User_type, User_state
 import time
 
 class User(db.Model):
@@ -16,4 +16,4 @@ class User(db.Model):
     dt_updated = db.Column(db.Integer, default=lambda: int(time.time()), onupdate=lambda: int(time.time()))
 
     devices = db.relationship('Device', back_populates='user')
-    files = db.relationship('File_trk', back_populates='user')  # ✅ adicionado
+    files = db.relationship('File_trk', back_populates='user')
