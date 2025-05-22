@@ -123,17 +123,28 @@
 
 .upload-box {
   border: 2px dashed #00693e;
+  background-color: #eafff3;
+  padding: 3rem 2rem;
+  text-align: center;
   border-radius: 8px;
-  padding: 4rem 2rem;
-  background-color: #f4fdf8;
-  color: #00693e;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease-in-out;
 }
 
 .upload-box:hover {
-  background-color: #e0f9ed;
+  background-color: #d8fce9;
 }
+
+.upload-box .icon {
+  color: #00693e;
+  font-size: 3rem;
+}
+
+.upload-box p {
+  color: #00693e;
+  font-size: 1rem;
+}
+
 
 .select select {
   min-height: 30px;

@@ -24,18 +24,24 @@
       </div>
 
       <div class="calendario mt-4">
-  <table id="calendario">
-    <thead>
-      <tr>
-        <th colspan="7" id="mesAno">Mês Ano</th>
-      </tr>
-      <tr>
-        <th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
-      </tr>
-    </thead>
-    <tbody id="dias"></tbody>
-  </table>
-</div>
+        <table id="calendario">
+          <thead>
+            <tr>
+              <th colspan="7" id="mesAno">Mês Ano</th>
+            </tr>
+            <tr>
+              <th>Dom</th>
+              <th>Seg</th>
+              <th>Ter</th>
+              <th>Qua</th>
+              <th>Qui</th>
+              <th>Sex</th>
+              <th>Sáb</th>
+            </tr>
+          </thead>
+          <tbody id="dias"></tbody>
+        </table>
+      </div>
 
 
 
@@ -47,17 +53,22 @@
       </div>
     </aside>
 
-    <main class="is-flex is-flex-direction-column is-align-items-center is-justify-content-start has-background-white py-4 px-2">
-      <div class="is-flex is-align-items-center mb-4">
-        <i class="fas fa-clock mr-4" style="font-size: 5rem; color: #00693e;"></i>
+    <main class="main-exibicao">
+      <div class="clock-container">
+        <i class="fas fa-clock"></i>
         <p id="clock" class="clock-time">--:--:--</p>
       </div>
 
       <div class="content-area">
-        <img src="{{ url_for('static', filename='img/noticia (2).png') }}" alt="Imagem principal"
-          style="width: 100%; border-radius: 10px;" />
+        <div id="carousel">
+          {% for img in imagens %}
+          <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}" alt="Imagem"
+            class="carousel-img {{ 'ativo' if loop.first else 'inativo' }}">
+          {% endfor %}
+        </div>
       </div>
     </main>
+
 
     <aside>
       <div class="mb-5">
@@ -83,4 +94,5 @@
     </aside>
   </div>
 </body>
+
 </html>

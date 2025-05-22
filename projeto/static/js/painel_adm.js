@@ -68,4 +68,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     sidebar.classList.remove("active");
   }
+
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('fileName');
+  const placeholder = document.getElementById('uploadPlaceholder');
+
+  if (fileInput && fileName && placeholder) {
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        const nome = fileInput.files[0].name;
+        placeholder.style.display = "none";
+        fileName.style.display = "block";
+        fileName.textContent = `Imagem selecionada: ${nome}`;
+      }
+    });
+  }
 });

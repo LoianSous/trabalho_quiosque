@@ -105,3 +105,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   diasContainer.innerHTML = html;
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const images = document.querySelectorAll(".carousel-img");
+    let index = 0;
+
+    if (images.length > 0) {
+      //images[0].style.display = "block";
+
+      setInterval(() => {
+        images[index].style.display = "none";
+        index = (index + 1) % images.length;
+        images[index].style.display = "block";
+      }, 5000); 
+    }
+  });
