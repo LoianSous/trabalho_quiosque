@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Blueprint
+from flask import Flask, render_template, Blueprint, redirect
 from dotenv import load_dotenv
 from prosecco.config import db, migrate, limiter
 from prosecco.routes import login_auth
@@ -21,6 +21,9 @@ with prosecco.app_context():
 
 
 prosecco.register_blueprint(login_auth)
+@prosecco.errorhandler(429)
+def ratelimit_exceeded(e):
+    return redirect('https://http.cat/429'), 429
 
 @prosecco.route('/')
 def painel():
@@ -33,6 +36,7 @@ def login():
 @prosecco.route('/adm')
 def adm():
     return render_template('painel_adm.html')
+
 
 
 if __name__ == '__main__':
