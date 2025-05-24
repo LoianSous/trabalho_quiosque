@@ -9,6 +9,7 @@ class User_state(Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     BLOCKED = "blocked"
+    PENDING = 'pending'
     
     
 class File_state(Enum):

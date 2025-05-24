@@ -15,6 +15,6 @@ def auth():
     user = db.session.query(User).filter_by(email=user_id).first()
 
     if user and argon2.verify(passphrase, user.passphrase):
-        return jsonify(success=True, redirect_url=url_for('adm')), 
+        return jsonify(success=True, redirect_url=url_for('adm'))
     else:
         return jsonify(success=False, error="invalid credentials"), 401

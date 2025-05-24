@@ -1,8 +1,9 @@
 from prosecco.config import db
 from prosecco.config import User_type, User_state
-import time
+from datetime import datetime, timezone
 
 class User(db.Model):
+    
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -10,10 +11,10 @@ class User(db.Model):
     passphrase = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(128), unique=True, nullable=False)
     u_type = db.Column(db.Enum(User_type, name="user_type"), nullable=False, default=User_type.USER)
-    u_state = db.Column(db.Enum(User_state, name="user_state"), nullable=False, default=User_state.ACTIVE)
+    u_state = db.Column(db.Enum(User_state, name="user_state"), nullable=False, default=User_state.PENDING)
 
-    dt_created = db.Column(db.Integer, default=lambda: int(time.time()))
-    dt_updated = db.Column(db.Integer, default=lambda: int(time.time()), onupdate=lambda: int(time.time()))
+    dt_created = db.Column(db.Integer, default=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'))
+    dt_updated = db.Column(db.Integer, default=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'), onupdate=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'))
 
     devices = db.relationship('Device', back_populates='user')
     files = db.relationship('File_trk', back_populates='user')
