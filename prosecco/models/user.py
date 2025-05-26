@@ -18,3 +18,11 @@ class User(db.Model):
 
     devices = db.relationship('Device', back_populates='user')
     files = db.relationship('File_trk', back_populates='user')
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "u_state": self.u_state.value 
+        }

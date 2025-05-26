@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/painel_adm.css') }}">
     <script src="{{ url_for('static', filename='js/painel_adm.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/user_list_fetch.js') }}" defer></script>
 </head>
 
 <body class="has-background-light is-flex is-flex-direction-column" style="min-height: 100vh;">
@@ -59,9 +60,9 @@
                             </div>
                         </div>
                         <div class="column is-6">
-                            <div class="box">
+                            <div class="box" id='users_list'>
                                 <h3 class="title is-5">Contas de Usuário</h3>
-                                <p>Crie, edite ou remova usuários comuns e administradores.</p>
+                                <p>autorize, edite  ou remova usuários.</p>
                             </div>
                         </div>
                     </div>
@@ -222,7 +223,7 @@
 
             <section id="gerenciarContasSection" class="section" style="display: none;">
                 <div class="container">
-                    <h2 class="title is-4">Gerenciar Contas</h2>
+                    <h2 class="title is-4">Adicionar Contas</h2>
                     <div class="columns is-multiline">
                         <div class="column is-12">
                             <div class="box">
@@ -275,5 +276,4 @@
         <p>© 2025 IFMS - TADS-4</p>
     </footer>
 </body>
-
 </html>

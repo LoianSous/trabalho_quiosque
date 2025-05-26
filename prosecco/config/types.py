@@ -8,7 +8,7 @@ class User_type(Enum):
 class User_state(Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
-    BLOCKED = "blocked"
+    DELETED = 'deleted'
     PENDING = 'pending'
     
     
