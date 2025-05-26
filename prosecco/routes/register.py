@@ -1,6 +1,6 @@
 from flask import render_template, request, Blueprint, jsonify, redirect, url_for
 from prosecco.config import db
-from passlib.hash import argon2
+from werkzeug.security import generate_password_hash
 from prosecco.models import User
 
 register_new = Blueprint('register_new', __name__)
@@ -14,9 +14,9 @@ def new_user():
     existing_user = db.session.query(User).filter_by(email=email).first()
     
     if existing_user is not None:
-        return jsonify(success=False, error="user aready exists"), 409
+        return jsonify(success=False, error="user already exists"), 409
     
-    hash_passphrase = argon2.hash(passphrase)
+    hash_passphrase = generate_password_hash(passphrase)
     
     new_user = User(name=username, email=email, passphrase=hash_passphrase)
     

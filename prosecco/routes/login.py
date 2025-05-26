@@ -1,6 +1,6 @@
 from flask import render_template, request, Blueprint, jsonify, redirect, url_for
 from prosecco.config import db
-from passlib.hash import argon2
+from werkzeug.security import check_password_hash
 from prosecco.config import limiter
 from prosecco.models import User
 
@@ -14,7 +14,7 @@ def auth():
 
     user = db.session.query(User).filter_by(email=user_id).first()
 
-    if user and argon2.verify(passphrase, user.passphrase):
+    if user and check_password_hash(user.passphrase, passphrase):
         return jsonify(success=True, redirect_url=url_for('adm'))
     else:
         return jsonify(success=False, error="invalid credentials"), 401
