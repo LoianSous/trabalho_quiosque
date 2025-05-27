@@ -9,12 +9,17 @@ login_auth = Blueprint('login_auth', __name__)
 @login_auth.route('/login/auth', methods=['POST'])
 @limiter.limit("5 per hour")
 def auth():
-    user_id = request.form.get('id')
-    passphrase = request.form.get('passphrase')
+    email_do_formulario = request.form.get('id') 
+    passphrase_do_formulario = request.form.get('passphrase')
 
-    user = db.session.query(User).filter_by(email=user_id).first()
+    if not email_do_formulario or not passphrase_do_formulario:
+        return jsonify(success=False, error="Email e senha são obrigatórios"), 400
 
-    if user and check_password_hash(user.passphrase, passphrase):
-        return jsonify(success=True, redirect_url=url_for('adm'))
+    user = db.session.query(User).filter(User.email == email_do_formulario).first()
+
+    
+    if user and check_password_hash(user.passphrase, passphrase_do_formulario):
+
+        return jsonify(success=True, redirect_url=url_for('adm')), 200
     else:
-        return jsonify(success=False, error="invalid credentials"), 401
+        return jsonify(success=False, error="Credenciais inválidas"), 401

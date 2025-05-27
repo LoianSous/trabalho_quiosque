@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/painel_adm.css') }}">
     <script src="{{ url_for('static', filename='js/painel_adm.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/user_list_fetch.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/user_adm_add.js') }}" defer></script>
 </head>
 
 <body class="has-background-light is-flex is-flex-direction-column" style="min-height: 100vh;">
@@ -221,59 +222,54 @@
                 </div>
             </section>
 
-            <section id="gerenciarContasSection" class="section" style="display: none;">
-                <div class="container">
-                    <h2 class="title is-4">Adicionar Contas</h2>
-                    <div class="columns is-multiline">
-                        <div class="column is-12">
-                            <div class="box">
-                                <h3 class="title is-5 mb-3">Adicionar Novo Usuário</h3>
+            <section id="gerenciarContasSection" class="section"> <div class="container">
+        <h2 class="title is-4">Adicionar Contas</h2>
+        <div class="columns is-multiline">
+            <div class="column is-12">
+                <div class="box">
+                    <h3 class="title is-5 mb-3">Adicionar Novo Usuário</h3>
 
-                                <div class="field">
-                                    <label class="label">Nome</label>
-                                    <div class="control">
-                                        <input class="input" type="text" placeholder="Nome do usuário" />
-                                    </div>
-                                </div>
+                    <div class="field">
+                        <label class="label">Nome</label>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="Nome do usuário" id="userName" />
+                        </div>
+                    </div>
 
-                                <div class="field">
-                                    <label class="label">Email</label>
-                                    <div class="control">
-                                        <input class="input" type="email" placeholder="email@ifms.edu.br" />
-                                    </div>
-                                </div>
-                                <div class="field">
-                                    <label class="label">Passphrase</label>
-                                    <div class="control">
-                                        <input class="input" type="password" placeholder="digite sua senha" />
-                                    </div>
-                                </div>
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control">
+                            <input class="input" type="email" placeholder="email@ifms.edu.br" id="userEmail" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Passphrase</label>
+                        <div class="control">
+                            <input class="input" type="password" placeholder="digite sua senha" id="userPassphrase" />
+                        </div>
+                    </div>
 
-                                <div class="field">
-                                    <label class="label">Tipo</label>
-                                    <div class="control">
-                                        <div class="select is-fullwidth">
-                                            <div class="select is-fullwidth">
-                                                <select>
-                                                    <option>Usuário Comum</option>
-                                                    <option>Administrador</option>
-                                                </select>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="field mt-4">
-                                    <div class="control">
-                                        <button class="button is-primary is-fullwidth">Criar Conta</button>
-                                    </div>
-                                </div>
+                    <div class="field">
+                        <label class="label">Tipo</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="userType">
+                                    <option value="USER">Usuário Comum</option> <option value="ADMIN">Administrador</option> </select>
                             </div>
                         </div>
                     </div>
+
+                    <div class="field mt-4">
+                        <div class="control">
+                            <button class="button is-primary is-fullwidth" id="criarContaBtn">Criar Conta</button>
+                        </div>
+                    </div>
+                    <p id="feedbackMessage" class="mt-3"></p>
                 </div>
-            </section>
+            </div>
+        </div>
+    </div>
+</section>
         </main>
     </div>
 

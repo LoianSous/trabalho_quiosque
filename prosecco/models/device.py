@@ -1,3 +1,4 @@
+from email.policy import default
 from sqlalchemy import Nullable
 from prosecco.config import db
 from prosecco.config import Device_state
@@ -7,9 +8,9 @@ class Device(db.Model):
     __tablename__ = 'devices'
     
     id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String(128), nullable=False)
+    ip = db.Column(db.String(128), nullable=False, unique=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    locale = db.Column(db.String(128), nullable=False)
+    locale = db.Column(db.String(128), nullable=True, default='geral')
     group = db.Column(db.String(128), nullable=True, default='geral')
     a_state = db.Column(db.Enum(Device_state, name='device_state'), nullable=False, default=Device_state.ACTIVE)
     dt_created = db.Column(db.Integer, default=db.func.strftime('%s', 'now')) 
@@ -22,5 +23,6 @@ class Device(db.Model):
         return {
             'ip': self.ip,
             'locale': self.locale,
-            'group': self.group
+            'group': self.group,
+            'locale': self.locale
         }
