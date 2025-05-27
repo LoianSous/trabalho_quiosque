@@ -35,6 +35,10 @@ def painel():
 def login():
     return render_template('painel_login.html')
 
+@prosecco.route('/login/recovery')
+def recovery():
+    return render_template('recuperar_senha')
+
 @prosecco.route('/adm')
 def adm():
     return render_template('painel_adm.html')
