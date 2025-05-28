@@ -30,7 +30,7 @@ def create_new_user():
     if not passphrase:
         return jsonify(success=False, error='Password is required'), 400
 
-    new_user = User(name=username, email=email, passphrase=hash_pass(passphrase), u_type=u_type)
+    new_user = User(name=username, email=email, passphrase=hash_pass(passphrase), u_type=u_type, u_state=User_state.ACTIVE)
         
     db.session.add(new_user)
     db.session.commit()
