@@ -41,6 +41,9 @@
 
             <div class="field">
                 <button class="button is-success is-fullwidth">Entrar</button>
+                <a href="{{ url_for('recovery') }}" >
+                <button class="button-red is-success is-fullwidth">Recuperar acesso</button>
+                </a>
             </div>
         </form>
 
@@ -69,7 +72,7 @@ async function Login() {
     const data = await response.json();
 
     if (data.success) {
-        window.location.href = data.redirect_url;  // navega para a página do painel
+        window.location.href = data.redirect_url;
     } else {
         document.getElementById("mensagem").innerHTML = data.error;
     }

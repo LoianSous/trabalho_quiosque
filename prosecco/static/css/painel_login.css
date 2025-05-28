@@ -6,6 +6,20 @@ input::placeholder {
   filter: brightness(0.95);
 }
 
+.button-red {
+  background-color: #ff3860;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.button-red:hover {
+  background-color: #d92f50;
+}
+
 .footer-login {
   background-color: #00693e;
   color: white;

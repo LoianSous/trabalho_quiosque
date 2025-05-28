@@ -37,7 +37,7 @@ def login():
 
 @prosecco.route('/login/recovery')
 def recovery():
-    return render_template('recuperar_senha')
+    return render_template('recuperar_senha.html')
 
 @prosecco.route('/adm')
 def adm():
