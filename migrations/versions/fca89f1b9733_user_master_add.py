@@ -31,9 +31,9 @@ def upgrade():
             )
         VALUES (
         0,
-        'Victor Guilherme',
-        '$argon2id$v=19$m=65536,t=3,p=4$HMOY837v3VvLGeO8t1YKgQ$2wzGWnyNOEUo/ljgiCiuN/IdFsWOJUWn1WzLxa+xrIc',
-        'v.guilherme.barreto@gmail.com',
+        'sa',
+        'scrypt:32768:8:1$ZF6omYpojhSj81dP$f51d06b894bb60c9e5b79ed04e3f276e4230d4bd1ff73e02ddbd6025ea8c1039aa885755ec1ef4b53ffea4fe5065164d983f8a94905b9d60de939f9b0cf5584f',
+        'super@admin.com',
         'ADMIN',
         'ACTIVE',
         datetime('now'),
