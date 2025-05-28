@@ -1,7 +1,9 @@
 from flask import abort, request
 from flask_login import current_user, login_manager
-from prosecco.config import User_type
 from functools  import wraps
+from prosecco.config import User_type, Device_state, db
+from prosecco.models import Device
+
 
 def access_required(*allowed_roles):
     def decorator(f):
@@ -25,16 +27,13 @@ def access_required(*allowed_roles):
 def ip_authorized_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated:
-            abort(401)
+        client_ip = request.remote_addr
 
-        if current_user.u_type != User_type.ADMIN:
-            client_ip = request.remote_addr
-            allowed = any(
-                device.ip == client_ip and device.a_state == Device_state.ACTIVE
-                for device in current_user.devices
-            )
-            if not allowed:
-                abort(403)
+        device = db.session.query.filter_by(ip=client_ip, a_state=Device_state.ACTIVE).first()
+
+        if not device:
+            abort(403)
+        
         return f(*args, **kwargs)
+    
     return decorated_function

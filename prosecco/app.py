@@ -53,6 +53,10 @@ def ratelimit_exceeded(e):
 def painel():
     return render_template('painel_exibicao.html')
 
+@prosecco.route('/new')
+def reg():
+    return render_template('register.html')
+
 @prosecco.route('/login')
 def login():
     return render_template('painel_login.html')
@@ -66,10 +70,6 @@ def recovery():
 @access_required(User_type.ADMIN)
 def adm():
     return render_template('painel_adm.html')
-
-@prosecco.route('/new')
-def reg():
-    return render_template('register.html')
 
 
 if __name__ == '__main__':
