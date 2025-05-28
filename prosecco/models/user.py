@@ -1,8 +1,9 @@
 from prosecco.config import db
 from prosecco.config import User_type, User_state
+from flask_login import UserMixin
 from datetime import datetime, timezone
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     
     __tablename__ = 'users'
 
@@ -13,8 +14,8 @@ class User(db.Model):
     u_type = db.Column(db.Enum(User_type, name="user_type"), nullable=False, default=User_type.USER)
     u_state = db.Column(db.Enum(User_state, name="user_state"), nullable=False, default=User_state.PENDING)
 
-    dt_created = db.Column(db.Integer, default=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'))
-    dt_updated = db.Column(db.Integer, default=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'), onupdate=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'))
+    dt_created = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    dt_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     devices = db.relationship('Device', back_populates='user')
     files = db.relationship('File_trk', back_populates='user')
@@ -26,3 +27,6 @@ class User(db.Model):
             "email": self.email,
             "u_state": self.u_state.value 
         }
+
+    def is_active_account(self):
+        return self.u_state == User_state.ACTIVE
