@@ -23,7 +23,7 @@ migrate.init_app(prosecco, db)
 limiter.init_app(prosecco)
 
 login_manager = LoginManager()
-login_manager.login_view = 'login'
+login_manager.login_view = 'login' #type: ignore
 login_manager.init_app(prosecco)
 
 
