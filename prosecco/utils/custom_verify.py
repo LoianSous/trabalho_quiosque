@@ -29,7 +29,7 @@ def ip_authorized_required(f):
     def decorated_function(*args, **kwargs):
         client_ip = request.remote_addr
 
-        device = db.session.query.filter_by(ip=client_ip, a_state=Device_state.ACTIVE).first()
+        device = db.session.query.filter(Device.ip==client_ip, Device.a_state==Device_state.ACTIVE).first()
 
         if not device:
             abort(403)
