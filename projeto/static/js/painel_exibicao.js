@@ -106,17 +106,67 @@ document.addEventListener("DOMContentLoaded", () => {
   diasContainer.innerHTML = html;
 });
 
+let ultimaImagem = null;
+let totalImagens = 0;
+
 document.addEventListener("DOMContentLoaded", () => {
-    const images = document.querySelectorAll(".carousel-img");
-    let index = 0;
+  const images = document.querySelectorAll(".carousel-img");
+  let index = 0;
 
-    if (images.length > 0) {
-      //images[0].style.display = "block";
+  if (images.length > 0) {
+    ultimaImagem = images[images.length - 1].src.split('/').pop();
+    totalImagens = images.length;
+    
+    setInterval(() => {
+      images[index].style.display = "none";
+      index = (index + 1) % images.length;
+      images[index].style.display = "block";
+    }, 5000);
+  }
+});
 
-      setInterval(() => {
-        images[index].style.display = "none";
-        index = (index + 1) % images.length;
-        images[index].style.display = "block";
-      }, 5000); 
-    }
-  });
+function verificarNovasImagens() {
+  fetch('/check_new_images')
+    .then(response => response.json())
+    .then(data => {
+      const mudouImagem = data.ultimaImagem && data.ultimaImagem !== ultimaImagem;
+      const mudouQuantidade = data.totalImagens !== totalImagens;
+
+      if (mudouImagem || mudouQuantidade) {
+        ultimaImagem = data.ultimaImagem;
+        totalImagens = data.totalImagens;
+        atualizarCarousel();
+      }
+    })
+    .catch(err => console.error("Erro ao verificar imagens:", err));
+}
+
+function atualizarCarousel() {
+  fetch("/?_=" + new Date().getTime())
+    .then(response => response.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const novasImagens = doc.querySelectorAll(".carousel-img");
+
+      const carousel = document.getElementById("carousel");
+      carousel.innerHTML = "";
+      novasImagens.forEach(img => {
+        carousel.appendChild(img);
+      });
+
+      // Reativar o carrossel após atualizar as imagens
+      let index = 0;
+      if (novasImagens.length > 0) {
+        novasImagens.forEach(img => img.style.display = "none");
+        novasImagens[0].style.display = "block";
+        setInterval(() => {
+          novasImagens[index].style.display = "none";
+          index = (index + 1) % novasImagens.length;
+          novasImagens[index].style.display = "block";
+        }, 5000);
+      }
+    });
+}
+
+setInterval(verificarNovasImagens, 5000);

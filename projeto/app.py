@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
@@ -14,6 +14,17 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+@app.route('/check_new_images')
+def check_new_images():
+    conn = get_db_connection()
+    imagem = conn.execute('SELECT filename FROM imagens ORDER BY id DESC LIMIT 1').fetchone()
+    total = conn.execute('SELECT COUNT(*) as total FROM imagens').fetchone()['total']
+    conn.close()
+    return jsonify({
+        'ultimaImagem': imagem['filename'] if imagem else None,
+        'totalImagens': total
+    })
+
 @app.route('/')
 def painel():
     conn = get_db_connection()
@@ -27,10 +38,11 @@ def login():
 
 @app.route('/adm')
 def adm():
+    secao = request.args.get('secao', default='inicio')
     conn = get_db_connection()
     imagens = conn.execute('SELECT * FROM imagens').fetchall()
     conn.close()
-    return render_template('painel_adm.html', imagens=imagens)
+    return render_template('painel_adm.html', imagens=imagens, secao=secao)
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -49,7 +61,7 @@ def upload():
     conn.commit()
     conn.close()
 
-    return redirect(url_for('adm')) 
+    return redirect(url_for('adm', secao='upload')) 
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
 def delete_image(image_id):
@@ -64,8 +76,7 @@ def delete_image(image_id):
         conn.execute('DELETE FROM imagens WHERE id = ?', (image_id,))
         conn.commit()
     conn.close()
-    return redirect(url_for('adm'))
-
+    return redirect(url_for('adm', secao='upload'))
 
 if __name__ == '__main__':
     app.run(debug=True)

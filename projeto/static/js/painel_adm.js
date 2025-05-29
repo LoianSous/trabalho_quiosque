@@ -69,6 +69,22 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.classList.remove("active");
   }
 
+  const params = new URLSearchParams(window.location.search);
+  const secao = params.get("secao");
+
+  const botoesMenu = document.querySelectorAll(".menu-list li a");
+  const botoesPorSecao = {
+    upload: 1,
+    selecionar: 2,
+    identificar: 3,
+    gerenciar: 4
+  };
+
+  if (secao && botoesPorSecao[secao] !== undefined) {
+    botoesMenu[botoesPorSecao[secao]].click();
+  }
+
+
   const fileInput = document.getElementById('fileInput');
   const fileName = document.getElementById('fileName');
   const placeholder = document.getElementById('uploadPlaceholder');
