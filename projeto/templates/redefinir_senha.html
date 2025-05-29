@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Redefinir Senha - IFMS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma.min.css') }}">
+</head>
+<body class="section">
+    <div class="container">
+        <h1 class="title is-4">Redefinir Senha</h1>
+        <form method="POST">
+            <div class="field">
+                <label class="label">Nova Senha</label>
+                <div class="control">
+                    <input class="input" type="password" name="nova_senha" placeholder="Digite sua nova senha" required>
+                </div>
+            </div>
+            <button class="button is-success">Salvar</button>
+        </form>
+    </div>
+</body>
+</html>

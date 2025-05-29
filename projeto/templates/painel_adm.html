@@ -43,7 +43,11 @@
                 <li><a><i class="fas fa-id-badge mr-2"></i>Identificar Telas</a></li>
                 <li><a><i class="fas fa-users-cog mr-2"></i>Gerenciar Contas</a></li>
             </ul>
-
+            <div class="logout-box">
+                <a href="{{ url_for('logout') }}" class="button is-danger is-fullwidth is-small">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Sair
+                </a>
+            </div>
         </aside>
         <main class="column p-5">
             <section class="section">
@@ -255,41 +259,92 @@
                             <div class="box">
                                 <h3 class="title is-5 mb-3">Adicionar Novo Usuário</h3>
 
-                                <div class="field">
-                                    <label class="label">Nome</label>
-                                    <div class="control">
-                                        <input class="input" type="text" placeholder="Nome do usuário" />
-                                    </div>
-                                </div>
-
-                                <div class="field">
-                                    <label class="label">Email</label>
-                                    <div class="control">
-                                        <input class="input" type="email" placeholder="email@ifms.edu.br" />
-                                    </div>
-                                </div>
-
-                                <div class="field">
-                                    <label class="label">Tipo</label>
-                                    <div class="control">
-                                        <div class="select is-fullwidth">
-                                            <div class="select is-fullwidth">
-                                                <select>
-                                                    <option>Usuário Comum</option>
-                                                    <option>Administrador</option>
-                                                </select>
-                                            </div>
-
+                                <form action="{{ url_for('criar_usuario') }}" method="POST">
+                                    <div class="field">
+                                        <label class="label">Nome</label>
+                                        <div class="control">
+                                            <input class="input" type="text" name="nome" placeholder="Nome do usuário"
+                                                required />
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="field mt-4">
-                                    <div class="control">
-                                        <button class="button is-primary is-fullwidth">Criar Conta</button>
+                                    <div class="field">
+                                        <label class="label">Email</label>
+                                        <div class="control">
+                                            <input class="input" type="email" name="email"
+                                                placeholder="email@ifms.edu.br" required />
+                                        </div>
                                     </div>
-                                </div>
+
+                                    <div class="field">
+                                        <label class="label">Tipo</label>
+                                        <div class="control">
+                                            <div class="select is-fullwidth">
+                                                <select name="tipo" required>
+                                                    <option value="comum">Usuário Comum</option>
+                                                    <option value="admin">Administrador</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="field mt-4">
+                                        <div class="control">
+                                            <button class="button is-primary is-fullwidth" type="submit">Criar
+                                                Conta</button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
+                            <div class="box mt-5">
+                                <h3 class="title is-5 mb-3">Usuários Cadastrados</h3>
+
+                                <table class="table is-fullwidth is-striped is-hoverable">
+                                    <thead>
+                                        <tr>
+                                            <th>Email</th>
+                                            <th>Tipo</th>
+                                            <th class="has-text-centered">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for usuario in usuarios %}
+                                        <tr>
+                                            <td>{{ usuario.email }}</td>
+                                            <td>
+                                                <form action="{{ url_for('atualizar_tipo_usuario', id=usuario.id) }}"
+                                                    method="POST" class="is-flex">
+                                                    <div class="select is-small mr-2">
+                                                        <select name="tipo" onchange="this.form.submit()">
+                                                            <option value="comum" {% if usuario.tipo=='comum'
+                                                                %}selected{% endif %}>Comum</option>
+                                                            <option value="admin" {% if usuario.tipo=='admin'
+                                                                %}selected{% endif %}>Administrador</option>
+                                                        </select>
+                                                    </div>
+                                                </form>
+                                            </td>
+                                            <td class="has-text-centered">
+                                                <form action="{{ url_for('reenviar_senha', id=usuario.id) }}"
+                                                    method="POST" style="display: inline;">
+                                                    <button class="button is-small is-info" title="Reenviar senha">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="{{ url_for('deletar_usuario', id=usuario.id) }}"
+                                                    method="POST" style="display: inline;">
+                                                    <button class="button is-small is-danger" title="Excluir"
+                                                        onclick="return confirm('Tem certeza que deseja excluir este usuário?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -302,5 +357,13 @@
         <p>© 2025 IFMS - TADS-4</p>
     </footer>
 </body>
+{% if tipo_usuario == 'comum' %}
+<style>
+    #gerenciarContasSection,
+    .menu-list li:nth-child(5) {
+        display: none !important;
+    }
+</style>
+{% endif %}
 
 </html>

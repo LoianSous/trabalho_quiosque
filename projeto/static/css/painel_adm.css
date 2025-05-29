@@ -185,6 +185,21 @@
   font-weight: 600 !important;
 }
 
+.logout-box {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.logout-box .button {
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
 
 
 

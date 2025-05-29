@@ -1,9 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+from werkzeug.utils import secure_filename
 import os
 import sqlite3
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+app.secret_key = 'uma_chave_secreta_segura_aqui'
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'loian9109@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'dfbkqfcwnviccvrm'     
+app.config['MAIL_DEFAULT_SENDER'] = 'loian9109@gmail.com'
+
+mail = Mail(app)
+
+s = URLSafeTimedSerializer(app.secret_key)
+
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['DATABASE'] = 'database.db'
 
@@ -32,17 +48,40 @@ def painel():
     conn.close()
     return render_template('painel_exibicao.html', imagens=imagens)
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        senha = request.form['senha']
+
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+        conn.close()
+
+        if user and check_password_hash(user['senha'], senha):
+            session['user_id'] = user['id']
+            session['email'] = user['email']
+            return redirect(url_for('adm'))
+        else:
+            flash('Email ou senha inválidos', 'danger')
+            return redirect(url_for('login'))
+
     return render_template('painel_login.html')
 
 @app.route('/adm')
 def adm():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
     secao = request.args.get('secao', default='inicio')
+
     conn = get_db_connection()
     imagens = conn.execute('SELECT * FROM imagens').fetchall()
+    user = conn.execute('SELECT tipo FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    usuarios = conn.execute('SELECT id, email, tipo FROM users').fetchall()
     conn.close()
-    return render_template('painel_adm.html', imagens=imagens, secao=secao)
+
+    return render_template('painel_adm.html', imagens=imagens, secao=secao, tipo_usuario=user['tipo'], usuarios=usuarios)
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -77,6 +116,131 @@ def delete_image(image_id):
         conn.commit()
     conn.close()
     return redirect(url_for('adm', secao='upload'))
+
+@app.route('/criar_usuario', methods=['POST'])
+def criar_usuario():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    nome = request.form['nome']
+    email = request.form['email']
+    tipo = request.form['tipo']
+
+    senha_padrao = 'ifms123'
+    senha_hash = generate_password_hash(senha_padrao)
+
+    conn = get_db_connection()
+    try:
+        conn.execute('INSERT INTO users (email, senha, tipo) VALUES (?, ?, ?)', (email, senha_hash, tipo))
+        conn.commit()
+        flash('Usuário criado com sucesso!', 'success')
+
+        token = s.dumps(email, salt='redefinir-senha')
+        link = url_for('alterar_senha', token=token, _external=True)
+
+        msg = Message('Redefinir sua senha - IFMS', recipients=[email])
+        msg.body = f"""
+Olá, {nome}!
+
+Sua conta no painel do IFMS foi criada.
+
+Para definir sua senha pessoal e substituir a senha padrão, clique no link abaixo:
+
+{link}
+
+Este link expira em 1 hora por segurança.
+
+Atenciosamente,
+Painel IFMS
+"""
+        mail.send(msg)
+
+    except sqlite3.IntegrityError:
+        flash('Erro: este email já está cadastrado.', 'danger')
+    finally:
+        conn.close()
+
+    return redirect(url_for('adm', secao='gerenciar'))
+
+@app.route('/atualizar_tipo_usuario/<int:id>', methods=['POST'])
+def atualizar_tipo_usuario(id):
+    novo_tipo = request.form['tipo']
+    conn = get_db_connection()
+    conn.execute('UPDATE users SET tipo = ? WHERE id = ?', (novo_tipo, id))
+    conn.commit()
+    conn.close()
+    flash('Tipo de usuário atualizado.', 'success')
+    return redirect(url_for('adm', secao='gerenciar'))
+
+@app.route('/deletar_usuario/<int:id>', methods=['POST'])
+def deletar_usuario(id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM users WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    flash('Usuário removido com sucesso.', 'success')
+    return redirect(url_for('adm', secao='gerenciar'))
+
+@app.route('/reenviar_senha/<int:id>', methods=['POST'])
+def reenviar_senha(id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT email FROM users WHERE id = ?', (id,)).fetchone()
+    conn.close()
+
+    if user:
+        email = user['email']
+        token = s.dumps(email, salt='redefinir-senha')
+        link = url_for('alterar_senha', token=token, _external=True)
+
+        msg = Message('Redefinir sua senha - IFMS', recipients=[email])
+        msg.body = f"""
+Olá!
+
+Você solicitou uma redefinição de senha.
+
+Clique no link abaixo para definir uma nova senha:
+
+{link}
+
+Este link expira em 1 hora por segurança.
+
+Atenciosamente,
+Painel IFMS
+"""
+        mail.send(msg)
+        flash('Link de redefinição enviado.', 'success')
+    else:
+        flash('Usuário não encontrado.', 'danger')
+
+    return redirect(url_for('adm', secao='gerenciar'))
+
+@app.route('/alterar_senha/<token>', methods=['GET', 'POST'])
+def alterar_senha(token):
+    try:
+        email = s.loads(token, salt='redefinir-senha', max_age=3600)
+    except:
+        flash('Link expirado ou inválido.', 'danger')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        nova_senha = request.form['nova_senha']
+        hash_senha = generate_password_hash(nova_senha)
+
+        conn = get_db_connection()
+        conn.execute('UPDATE users SET senha = ? WHERE email = ?', (hash_senha, email))
+        conn.commit()
+        conn.close()
+
+        flash('Senha alterada com sucesso!', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('redefinir_senha.html', email=email)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
