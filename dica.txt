@@ -10,9 +10,12 @@ git add .
 
 git commit -m "Primeiro commit"
 
-git push -u origin master ou main
+git push -u origin master ou main.
+
+git checkout -b loian para criar uma nova branch.
 
 git checkout nome_da_branch - para mudar de branch.
 
+git merge loian - passa os arquivos da branch loian para main.
 
 
