@@ -13,3 +13,5 @@ Thumbs.db
 *.log
 *.tmp
 *.db
+
+prosecco/static/img/uploads/*

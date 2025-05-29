@@ -10,7 +10,7 @@ def access_required(*allowed_roles):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                return login_manager.unauthorized()
+                abort(401)
             
             if current_user.u_type == User_type.ADMIN:
                 return f(*args, **kwargs)
@@ -29,7 +29,7 @@ def ip_authorized_required(f):
     def decorated_function(*args, **kwargs):
         client_ip = request.remote_addr
 
-        device = db.session.query.filter(Device.ip==client_ip, Device.a_state==Device_state.ACTIVE).first()
+        device = db.session.query(Device).filter(Device.ip==client_ip, Device.a_state==Device_state.ACTIVE).first()
 
         if not device:
             abort(403)

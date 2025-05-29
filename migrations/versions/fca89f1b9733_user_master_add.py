@@ -39,11 +39,33 @@ def upgrade():
         datetime('now'),
         datetime('now'));
             """)
+    op.execute("""
+        INSERT INTO devices(
+            id,
+            ip,
+            user_id,
+            locale,
+            group,
+            a_state,
+            dt_created,
+            dt_updated
+            )
+        VALUES (
+        0,
+        '127.0.0.1',
+        0,
+        'localhost',
+        'system',
+        'ACTIVE',
+        datetime('now'),
+        datetime('now'));
+            """)
 
 
 def downgrade():
     op.execute(
         """
         DELETE FROM users WHERE id = 0;
+        DELETE FROM devices WHERE id = 0;
         """
     )

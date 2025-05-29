@@ -4,12 +4,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeSidebar = document.getElementById("closeSidebar");
 
   const welcomeSection = document.querySelector("main .section");
+  const welcomeTitle = welcomeSection.querySelector("h2.title");
+  const welcomeSubtitle = welcomeSection.querySelector("p.subtitle");
+
   const sections = {
     upload: document.getElementById("uploadSection"),
     selecionar: document.getElementById("selecionarTelasSection"),
     identificar: document.getElementById("identificarTelasSection"),
     gerenciar: document.getElementById("gerenciarContasSection"),
   };
+
+  // Obter o nome do usuário do atributo data-username
+  const username = document.body.getAttribute("data-username");
+
+  if (username) {
+    if (welcomeTitle) {
+      welcomeTitle.innerText = `Bem-vindo, ${username}`;
+    }
+    if (welcomeSubtitle) {
+      welcomeSubtitle.innerText = "Selecione uma opção no menu à esquerda para começar.";
+    }
+  }
 
   if (toggle) {
     toggle.addEventListener("click", () => {

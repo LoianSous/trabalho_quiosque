@@ -9,7 +9,6 @@ class File_trk(db.Model):
     filename = db.Column(db.String(128), nullable=False)
     filepath = db.Column(db.String(128), nullable=False)
     file_state = db.Column(db.Enum(File_state, name='file_state'), nullable=False, default=File_state.UPLOADED)
-    group = db.Column(db.String(12), nullable=False, default='geral')
     dt_created = db.Column(db.Integer, default=db.func.strftime('%s', 'now')) 
     dt_updated = db.Column(db.Integer, default=db.func.strftime('%s', 'now'), onupdate=db.func.strftime('%s', 'now'))
 

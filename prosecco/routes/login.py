@@ -1,8 +1,9 @@
-from flask import request, Blueprint, jsonify, url_for, session
+from flask import request, Blueprint, jsonify, url_for, session, redirect
+from flask_login import login_required
 from prosecco.config import db, limiter, User_type
 from werkzeug.security import check_password_hash
 from prosecco.models import User
-from flask_login import login_user
+from flask_login import login_user, logout_user
 
 login_auth = Blueprint('login_auth', __name__)
 
@@ -36,3 +37,9 @@ def auth():
     session.permanent = True
 
     return jsonify(success=True, redirect_url=url_for('adm')), 200
+
+@login_auth.route('/logout', methods=['GET'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))

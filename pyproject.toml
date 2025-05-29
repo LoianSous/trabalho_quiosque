@@ -11,10 +11,11 @@ readme = 'README.md'
 requires-python = '3.12.10'
 dependencies = [
     'flask (>=3.1.1,<4.0.0)',
-    'flask-migrate (>=4.1.0,<5.0.0)',
-    'flask-sqlalchemy (>=3.1.1,<4.0.0)',
+    "flask-apscheduler (>=1.13.1,<2.0.0)",
     "flask-limiter (>=3.12,<4.0)",
     "flask-login (>=0.6.3,<0.7.0)",
+    'flask-migrate (>=4.1.0,<5.0.0)',
+    'flask-sqlalchemy (>=3.1.1,<4.0.0)',
     "flask-wtf (>=1.2.2,<2.0.0)",
     'python-dotenv (>=1.1.0,<2.0.0)',
     'taskipy (>=1.14.1,<2.0.0)'
@@ -31,3 +32,4 @@ flask = "flask.cli:main"
 [tool.taskipy.tasks]
 run = 'flask --app prosecco/app run --host=0.0.0.0 --debug'
 db = 'flask --app prosecco/app db'
+init = 'task db upgrade head && task run'
