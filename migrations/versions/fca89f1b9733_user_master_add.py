@@ -45,7 +45,7 @@ def upgrade():
             ip,
             user_id,
             locale,
-            group,
+            'group',
             a_state,
             dt_created,
             dt_updated
