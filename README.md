@@ -1,10 +1,7 @@
-instalando as dependencias: 
+Executando o Projeto:
 
-pip install .
+pip install poetry taskipy poetry-plugin-shell
 
-task db upgrade
-
-
-executando:
+task init
 
 task run
