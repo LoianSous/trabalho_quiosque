@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template
 from flask_login import LoginManager, login_required
 from prosecco.config import db, migrate, limiter, User_type, scheduler
 from prosecco.utils import access_required, ip_authorized_required
