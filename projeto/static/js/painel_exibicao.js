@@ -126,7 +126,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function verificarNovasImagens() {
-  fetch('/check_new_images')
+  const caminho = window.location.pathname;
+  const partes = caminho.split('/');
+  const identificador = partes.length > 2 ? partes[2] : "principal";
+
+  fetch(`/check_new_images/${identificador}`)
     .then(response => response.json())
     .then(data => {
       const mudouImagem = data.ultimaImagem && data.ultimaImagem !== ultimaImagem;

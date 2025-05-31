@@ -30,21 +30,32 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-@app.route('/check_new_images')
-def check_new_images():
+@app.route('/check_new_images/<identificador>')
+def check_new_images(identificador):
     conn = get_db_connection()
-    imagem = conn.execute('SELECT filename FROM imagens ORDER BY id DESC LIMIT 1').fetchone()
-    total = conn.execute('SELECT COUNT(*) as total FROM imagens').fetchone()['total']
+
+    if identificador == "principal":
+        imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id IS NULL ORDER BY id DESC').fetchall()
+    else:
+        tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', (identificador,)).fetchone()
+        if tela:
+            imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id = ? ORDER BY id DESC', (tela['id'],)).fetchall()
+        else:
+            imagens = []
+
+    total = len(imagens)
+    ultima = imagens[0]['filename'] if imagens else None
     conn.close()
+    
     return jsonify({
-        'ultimaImagem': imagem['filename'] if imagem else None,
+        'ultimaImagem': ultima,
         'totalImagens': total
     })
 
 @app.route('/')
 def painel():
     conn = get_db_connection()
-    imagens = conn.execute('SELECT filename FROM imagens').fetchall()
+    imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id IS NULL').fetchall()
     conn.close()
     return render_template('painel_exibicao.html', imagens=imagens)
 
@@ -72,16 +83,50 @@ def login():
 def adm():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-
     secao = request.args.get('secao', default='inicio')
-
     conn = get_db_connection()
-    imagens = conn.execute('SELECT * FROM imagens').fetchall()
+    telas = conn.execute('SELECT * FROM telas').fetchall()
+    imagens_por_tela = {}
+    telas_com_imagens = []
+    for tela in telas:
+        imagens = conn.execute('SELECT * FROM imagens WHERE tela_id = ?', (tela['id'],)).fetchall()
+        imagens_por_tela[tela['id']] = imagens
+        if imagens:
+            telas_com_imagens.append(tela)
+    imagens_sem_tela = conn.execute('SELECT * FROM imagens WHERE tela_id IS NULL').fetchall()
+    if imagens_sem_tela:
+        telas_com_imagens.append({
+        'nome': 'Tela Principal',
+        'identificador': 'principal'
+    })
+    total_imagens = conn.execute('SELECT COUNT(*) as total FROM imagens').fetchone()['total']
+    total_em_exibicao = sum(len(imagens) for imagens in imagens_por_tela.values()) + len(imagens_sem_tela)
     user = conn.execute('SELECT tipo FROM users WHERE id = ?', (session['user_id'],)).fetchone()
     usuarios = conn.execute('SELECT id, email, tipo FROM users').fetchall()
     conn.close()
+    return render_template('painel_adm.html',
+                           telas=telas,
+                           imagens_por_tela=imagens_por_tela,
+                           imagens_sem_tela=imagens_sem_tela,
+                           telas_com_imagens=telas_com_imagens,
+                           total_imagens=total_imagens,
+                           total_em_exibicao=total_em_exibicao,
+                           tipo_usuario=user['tipo'],
+                           usuarios=usuarios,
+                           secao=secao)
 
-    return render_template('painel_adm.html', imagens=imagens, secao=secao, tipo_usuario=user['tipo'], usuarios=usuarios)
+@app.route('/cadastrar_tela', methods=['POST'])
+def cadastrar_tela():
+    nome = request.form['nome']
+    identificador = request.form['identificador']
+
+    conn = get_db_connection()
+    conn.execute('INSERT INTO telas (nome, identificador) VALUES (?, ?)', (nome, identificador))
+    conn.commit()
+    conn.close()
+
+    flash('Tela cadastrada com sucesso!', 'success')
+    return redirect(url_for('adm', secao='identificar'))
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -96,11 +141,26 @@ def upload():
     imagem.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
     conn = get_db_connection()
-    conn.execute('INSERT INTO imagens (filename) VALUES (?)', (filename,))
+    tela_id = request.form.get('tela_id')
+    if not tela_id:
+        tela_id = None
+    else:
+        tela_id = int(tela_id)
+    conn.execute('INSERT INTO imagens (filename, tela_id) VALUES (?, ?)', (filename, tela_id))
     conn.commit()
     conn.close()
 
     return redirect(url_for('adm', secao='upload')) 
+
+@app.route('/exibicao/<identificador>')
+def painel_exibicao_por_tela(identificador):
+    conn = get_db_connection()
+    tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', (identificador,)).fetchone()
+    imagens = []
+    if tela:
+        imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id = ?', (tela['id'],)).fetchall()
+    conn.close()
+    return render_template('painel_exibicao.html', imagens=imagens)
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
 def delete_image(image_id):

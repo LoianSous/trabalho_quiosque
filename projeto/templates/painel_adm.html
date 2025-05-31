@@ -75,44 +75,23 @@
                         </h3>
 
                         <div class="columns is-multiline">
+                            {% for tela in telas_com_imagens %}
                             <div class="column is-3">
                                 <article class="message is-link">
                                     <div class="message-body has-text-centered">
                                         <i class="fas fa-tv fa-2x mb-2"></i><br>
-                                        Monitor 1<br>
-                                        <small>Entrada</small>
+                                        {{ tela.nome }}<br>
+                                        <small>{{ tela.identificador }}</small>
                                     </div>
                                 </article>
                             </div>
-                            <div class="column is-3">
-                                <article class="message is-link">
-                                    <div class="message-body has-text-centered">
-                                        <i class="fas fa-tv fa-2x mb-2"></i><br>
-                                        Monitor 2<br>
-                                        <small>Cantina</small>
-                                    </div>
-                                </article>
-                            </div>
-                            <div class="column is-3">
-                                <article class="message is-link">
-                                    <div class="message-body has-text-centered">
-                                        <i class="fas fa-tv fa-2x mb-2"></i><br>
-                                        Monitor 3<br>
-                                        <small>Laboratório</small>
-                                    </div>
-                                </article>
-                            </div>
-                            <div class="column is-3">
-                                <article class="message is-link">
-                                    <div class="message-body has-text-centered">
-                                        <i class="fas fa-tv fa-2x mb-2"></i><br>
-                                        Monitor 4<br>
-                                        <small>Biblioteca</small>
-                                    </div>
-                                </article>
-                            </div>
+                            {% endfor %}
+                            {% if telas_com_imagens|length == 0 %}
+                            <p class="has-text-grey">Nenhuma tela exibindo imagens no momento.</p>
+                            {% endif %}
                         </div>
                     </div>
+
 
                     <div class="box has-text-centered">
                         <h3 class="title is-5 has-text-success mb-4">
@@ -122,13 +101,13 @@
                         <div class="columns is-mobile is-centered">
                             <div class="column is-5">
                                 <div class="notification is-success is-light py-4">
-                                    <p class="title is-4">4</p>
+                                    <p class="title is-4">{{ total_em_exibicao }}</p>
                                     <p class="subtitle is-6">Imagens em Exibição</p>
                                 </div>
                             </div>
                             <div class="column is-5">
                                 <div class="notification is-warning is-light py-4">
-                                    <p class="title is-4">12</p>
+                                    <p class="title is-4">{{ total_imagens }}</p>
                                     <p class="subtitle is-6">Imagens no Banco de Dados</p>
                                 </div>
                             </div>
@@ -138,6 +117,7 @@
                             Verifique imagens não utilizadas para manter o painel leve.
                         </p>
                     </div>
+
                 </div>
             </section>
 
@@ -156,32 +136,35 @@
                             <div id="fileName" class="has-text-success mt-2" style="display: none;"></div>
                         </div>
 
+                        <div class="field mt-4">
+                            <label class="label">Selecionar monitor de exibição:</label>
+                            <div class="control">
+                                <div class="select is-fullwidth">
+                                    <select name="tela_id">
+                                        <option value="" selected>Tela principal</option>
+                                        {% for tela in telas %}
+                                        <option value="{{ tela.id }}">{{ tela.nome }} ({{ tela.identificador }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="has-text-centered mt-4">
                             <button class="button is-success is-medium" type="submit">
                                 <i class="fas fa-upload mr-2"></i> Enviar
                             </button>
                         </div>
                     </form>
-                    <div class="field">
-                        <label class="label">Selecionar monitor(es) de exibição:</label>
-                        <div class="control">
-                            <div class="select is-multiple is-fullwidth">
-                                <select multiple size="4">
-                                    <option>Monitor 1 - Entrada</option>
-                                    <option>Monitor 2 - Cantina</option>
-                                    <option>Monitor 3 - Laboratório</option>
-                                    <option>Monitor 4 - Biblioteca</option>
-                                </select>
-                            </div>
-                            <p class="help is-info mt-2">Segure Ctrl (Windows) ou Command (Mac) para selecionar mais de
-                                um.</p>
-                        </div>
-                    </div>
-                    <div class="box">
-                        <h3 class="title is-5 mb-4 has-text-success">Imagens em Exibição ({{ imagens|length }})</h3>
 
+                    <div class="box mt-6">
+                        <h3 class="title is-5 mb-4 has-text-success">Imagens em Exibição</h3>
+
+                        {% for tela in telas %}
+                        <h3 class="title is-5 has-text-info mt-5">{{ tela.nome }} ({{ tela.identificador }})</h3>
                         <div class="columns is-multiline">
-                            {% for img in imagens %}
+                            {% for img in imagens_por_tela[tela.id] %}
                             <div class="column is-3">
                                 <div class="card">
                                     <div class="card-image">
@@ -200,8 +183,33 @@
                             </div>
                             {% endfor %}
                         </div>
-                    </div>
+                        {% endfor %}
 
+                        {% if imagens_sem_tela %}
+                        <h3 class="title is-5 has-text-danger mt-5">Imagens da Tela Principal</h3>
+                        <div class="columns is-multiline">
+                            {% for img in imagens_sem_tela %}
+                            <div class="column is-3">
+                                <div class="card">
+                                    <div class="card-image">
+                                        <figure class="image is-4by3">
+                                            <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}"
+                                                alt="Imagem">
+                                        </figure>
+                                    </div>
+                                    <footer class="card-footer">
+                                        <form action="{{ url_for('delete_image', image_id=img.id) }}" method="POST"
+                                            class="card-footer-item p-0">
+                                            <button class="button is-danger is-fullwidth">Remover</button>
+                                        </form>
+                                    </footer>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                    </div>
                 </div>
             </section>
 
@@ -239,15 +247,26 @@
             <section id="identificarTelasSection" class="section" style="display: none;">
                 <div class="container">
                     <h2 class="title is-4">Identificar Telas</h2>
-                    <p class="mb-4">Clique no botão abaixo para destacar visualmente os monitores conectados.</p>
+                    <p class="mb-4">Defina um nome para o local onde a tela está e defina um identificador.</p>
+                    <form action="{{ url_for('cadastrar_tela') }}" method="POST" class="mb-5">
+                        <div class="field">
+                            <label class="label">Nome da Tela</label>
+                            <div class="control">
+                                <input class="input" type="text" name="nome" placeholder="Ex: Entrada, Biblioteca"
+                                    required>
+                            </div>
+                        </div>
 
-                    <div class="box has-text-centered">
-                        <p class="mb-3">Este recurso exibirá um número ou nome na tela física para ajudar na
-                            identificação.</p>
-                        <button class="button is-info is-medium">
-                            <i class="fas fa-eye mr-2"></i> Iniciar Identificação
-                        </button>
-                    </div>
+                        <div class="field">
+                            <label class="label">Identificador (para URL)</label>
+                            <div class="control">
+                                <input class="input" type="text" name="identificador" placeholder="Ex: tela01" required>
+                            </div>
+                        </div>
+
+                        <button class="button is-primary mt-3" type="submit">Cadastrar Tela</button>
+                    </form>
+
                 </div>
             </section>
 
@@ -353,7 +372,7 @@
     </div>
 
     <footer class="footer-login has-text-white has-text-centered">
-        <div class="logo-text">D.L.V</div>
+        <div class="logo-text">TADS.L</div>
         <p>© 2025 IFMS - TADS-4</p>
     </footer>
 </body>
