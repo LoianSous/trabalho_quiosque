@@ -42,9 +42,6 @@
           <tbody id="dias"></tbody>
         </table>
       </div>
-
-
-
       <div class="campus-info has-text-centered mt-4">
         <div class="flag-box mb-2">
           <img src="{{ url_for('static', filename='img/bandeiratrl.jpg') }}" alt="Bandeira de Três Lagoas" />
@@ -63,7 +60,7 @@
         <div id="carousel">
           {% for img in imagens %}
           <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}" alt="Imagem"
-            class="carousel-img {{ 'ativo' if loop.first else 'inativo' }}">
+    class="carousel-img" style="display: '{{ 'block' if loop.first else 'none' }}';">
           {% endfor %}
         </div>
       </div>

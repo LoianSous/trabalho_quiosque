@@ -146,7 +146,7 @@ function verificarNovasImagens() {
 }
 
 function atualizarCarousel() {
-  fetch("/?_=" + new Date().getTime())
+  fetch(window.location.href + "?_=" + new Date().getTime())
     .then(response => response.text())
     .then(html => {
       const parser = new DOMParser();

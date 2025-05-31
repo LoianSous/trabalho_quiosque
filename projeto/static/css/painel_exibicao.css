@@ -20,6 +20,7 @@ aside {
   justify-content: space-between;
   align-items: stretch;
   min-width: 220px;
+  animation: variarVerde 20s infinite alternate;
 }
 
 main {
@@ -266,6 +267,9 @@ body {
   justify-content: center;
   align-items: center;
   border-radius: 10px;
+  position: relative;
+  background-color: #ffffff; /* branco puro */
+  animation: variarBranco 30s infinite alternate;
 }
 
 #calendario {
@@ -290,7 +294,41 @@ body {
   font-weight: bold;
 }
 
+@keyframes variarVerde {
+  0% {
+    background-color: #00693e;
+  }
+  25% {
+    background-color: #007f4a;
+  }
+  50% {
+    background-color: #005f35;
+  }
+  75% {
+    background-color: #007a40;
+  }
+  100% {
+    background-color: #00693e;
+  }
+}
 
+@keyframes variarBranco {
+  0% {
+    background-color: #ffffff;
+  }
+  25% {
+    background-color: #f9f9f9;
+  }
+  50% {
+    background-color: #f2f2f2;
+  }
+  75% {
+    background-color: #fafafa;
+  }
+  100% {
+    background-color: #ffffff;
+  }
+}
 
 
 
