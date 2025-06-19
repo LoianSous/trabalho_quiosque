@@ -7,23 +7,52 @@
     <title>Login - Painel IFMS</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma.min.css') }}">
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/painel_login.css') }}">
+    <script src="{{ url_for('static', filename='js/painel_login.js') }}" defer></script>
 </head>
 
 <body class="has-background-light is-flex is-flex-direction-column" style="min-height: 100vh;">
 
     <header class="header-login">
-        <div class="logo-box-ifms is-flex is-align-items-center">
-            <img src="{{ url_for('static', filename='img/ifmslogo.png') }}" alt="Logo IFMS" />
-            <div class="logo-subtext ml-3">
-                <p class="if-bold">Instituto Federal</p>
-                <p class="if-estado">Mato Grosso do Sul</p>
-            </div>
-        </div>
+        <div class="has-text-centered mb-5">
+        <div class="logo-box logo-ifms logo-centralizada">
+  <img src="{{ url_for('static', filename='img/ifms-tl-marca-2015.png') }}" alt="Logo IFMS" />
+</div>
+
+      </div>
 
         <h1 class="header-title">Acesse a página de controle!</h1>
     </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div id="toast-container" style="position: fixed; top: 1rem; right: 1rem; z-index: 9999;">
+        {% for category, message in messages %}
+        <div class="toast box mb-2
+  {% if category == 'success' %}toast-success
+  {% elif category == 'danger' %}toast-danger
+  {% elif category == 'warning' %}toast-warning
+  {% else %}toast-info{% endif %}">
+            <span style="margin-right: 0.5rem;">
+                {% if category == 'success' %}
+                <i class="fas fa-check-circle" style="color: #48c774;"></i>
+                {% elif category == 'danger' %}
+                <i class="fas fa-times-circle" style="color: #f14668;"></i>
+                {% elif category == 'warning' %}
+                <i class="fas fa-exclamation-triangle" style="color: #ffdd57;"></i>
+                {% else %}
+                <i class="fas fa-info-circle" style="color: #7a7a7a;"></i>
+                {% endif %}
+            </span>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="delete is-small"
+                style="position: absolute; top: 0.5rem; right: 0.5rem;"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <main class="section is-flex-grow-1 is-flex is-justify-content-center is-align-items-center">
         <div class="box" style="width: 100%; max-width: 400px;">
             <h1 class="title is-4 has-text-success has-text-centered">Login</h1>
@@ -51,7 +80,7 @@
     </main>
 
     <footer class="footer-login has-text-white has-text-centered">
-        <div class="logo-text">TADS.L</div>
+        <div class="logo-text">TADS.TL</div>
         <p>© 2025 IFMS - Campus Três Lagoas - TADS-4</p>
     </footer>
 </body>

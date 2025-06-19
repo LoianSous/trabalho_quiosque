@@ -32,53 +32,37 @@ input::placeholder {
   white-space: nowrap;
 }
 
-.logo-box-ifms {
-  background-color: white;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
+.logo-box.logo-ifms {
+  max-width: 180px;
+  max-height: 180px;
+  padding: 1rem;
+}
+
+.logo-box {
+  background-color: #ffffff;
+  border: 2px solid #00693e;
   border-radius: 12px;
-  border: 2px solid #ffffff;
+  padding: 1rem;
+  display: inline-block;
+  max-width: 160px;
+  max-height: 160px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  max-width: 350px;
+}
+
+.logo-box img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.logo-centralizada {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translate(-50%, -50%);
   z-index: 1;
-  position: relative;
 }
 
-
-.logo-box-ifms img {
-  max-height: 60px;
-}
-
-.logo-subtext {
-  color: black;
-  line-height: 1.2;
-}
-
-.if-bold {
-  font-weight: 700;
-  font-size: 1.05rem;
-  margin-bottom: 0.2rem;
-}
-
-.if-estado {
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.logo-text {
-  font-size: 2.5rem;
-  font-weight: 900;
-  letter-spacing: 0.15rem;
-  background: linear-gradient(270deg, #a8f0c6, #7ee0b0, #92f2ce, #a8f0c6);
-  background-size: 400% 400%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradientShift 12s ease infinite;
-  margin-bottom: 0.3rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); 
-}
 
 @keyframes gradientShift {
   0% {
@@ -92,6 +76,51 @@ input::placeholder {
   }
 }
 
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
+.toast {
+  animation: fade-slide-in 0.4s ease-out;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  min-width: 280px;
+  max-width: 320px;
+  color: #363636;
+  font-weight: 500;
+  font-size: 0.95rem;
+  position: relative;
+  animation: fade-slide-in 0.4s ease-out;
+}
+
+.toast-success {
+  border-left: 6px solid #48c774;
+}
+
+.toast-danger {
+  border-left: 6px solid #f14668;
+}
+
+.toast-warning {
+  border-left: 6px solid #ffdd57;
+}
+
+.toast-info {
+  border-left: 6px solid #7a7a7a;
+}
 
 

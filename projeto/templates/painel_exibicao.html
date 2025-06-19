@@ -16,37 +16,8 @@
     <aside>
       <div class="has-text-centered mb-5">
         <div class="logo-box logo-ifms">
-          <img src="{{ url_for('static', filename='img/ifmslogo.png') }}" alt="Logo IFMS" />
+          <img src="{{ url_for('static', filename='img/ifms-tl-marca-2015.png') }}" alt="Logo IFMS" />
         </div>
-        <p class="mt-2 has-text-weight-bold is-size-6">INSTITUTO</p>
-        <p class="has-text-weight-bold is-size-6">FEDERAL</p>
-        <p class="is-size-7">Mato Grosso do Sul</p>
-      </div>
-
-      <div class="calendario mt-4">
-        <table id="calendario">
-          <thead>
-            <tr>
-              <th colspan="7" id="mesAno">Mês Ano</th>
-            </tr>
-            <tr>
-              <th>Dom</th>
-              <th>Seg</th>
-              <th>Ter</th>
-              <th>Qua</th>
-              <th>Qui</th>
-              <th>Sex</th>
-              <th>Sáb</th>
-            </tr>
-          </thead>
-          <tbody id="dias"></tbody>
-        </table>
-      </div>
-      <div class="campus-info has-text-centered mt-4">
-        <div class="flag-box mb-2">
-          <img src="{{ url_for('static', filename='img/bandeiratrl.jpg') }}" alt="Bandeira de Três Lagoas" />
-        </div>
-        <p class="campus-name">Campus Três Lagoas</p>
       </div>
     </aside>
 
@@ -60,18 +31,15 @@
         <div id="carousel">
           {% for img in imagens %}
           <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}" alt="Imagem"
-    class="carousel-img" style="display: '{{ 'block' if loop.first else 'none' }}';">
+    class="carousel-img {% if loop.first %}ativo{% endif %}">
           {% endfor %}
         </div>
       </div>
     </main>
 
+    <aside class="direita">
 
-    <aside>
-      <div class="mb-5">
-        <p><i class="fas fa-school mr-2"></i> IFMS - Três Lagoas</p>
-        <p><i class="fas fa-map-marker-alt mr-2"></i> R. Ângelo Melão, 790</p>
-      </div>
+      <div id="data-completa" class="has-text-centered mb-3 data-completa"></div>
 
       <div id="clima" class="has-text-centered mb-4">
         <div class="mb-1">
@@ -85,7 +53,7 @@
       </div>
 
       <div class="footer-logo has-text-centered">
-        <div class="logo-text">TADS.L</div>
+        <div class="logo-text">TADS.TL</div>
         <p>© 2025 IFMS - TADS-4</p>
       </div>
     </aside>

@@ -9,10 +9,10 @@ body {
   display: flex;
   height: 100vh;
   flex-direction: row;
+  animation: variarCinza 20s infinite alternate;
 }
 
 aside {
-  background-color: #00693e;
   color: white;
   padding: 2rem 1rem;
   display: flex;
@@ -20,12 +20,23 @@ aside {
   justify-content: space-between;
   align-items: stretch;
   min-width: 220px;
-  animation: variarVerde 20s infinite alternate;
+  animation: variarCinza 20s infinite alternate;
+  transition: transform 0.8s ease, opacity 0.8s ease;
+  z-index: 10;
+}
+
+aside.oculto {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+aside.direita.oculto {
+  transform: translateX(100%);
 }
 
 main {
   flex: 1;
-  background-color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,7 +51,8 @@ main {
   flex-direction: column;
   align-items: center;
   justify-content: start;
-  background-color: white;
+  background-color: #ffffff;
+  animation: variarCinza 20s infinite alternate;
   padding: 0;
   height: 100vh;
   overflow: hidden;
@@ -60,17 +72,47 @@ main {
   max-height: 100%;
   object-fit: contain;
   border-radius: 10px;
-  display: none;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  z-index: 0;
+}
+
+@keyframes deslizarLado {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes flutuarVertical {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 .carousel-img.ativo {
-  display: block;
+  opacity: 1;
+  z-index: 1;
+  animation: deslizarLado 8s ease-in-out infinite,
+             flutuarVertical 30s ease-in-out infinite;
 }
 
 .logo-box.logo-ifms {
-  max-width: 100px;
-  max-height: 100px;
-  padding: 0.75rem;
+  max-width: 180px;
+  max-height: 180px;
+  padding: 1rem;
 }
 
 .clock-container {
@@ -79,7 +121,8 @@ main {
   margin: 1rem 0;
   font-size: 5rem;
   font-weight: bold;
-  background: linear-gradient(90deg, #00cba9, #00693e);
+  background-color: #ffffff;
+  animation: variarCinzaClaro 20s infinite alternate;
   background-clip: text;
   color: transparent;
   -webkit-background-clip: text;
@@ -116,10 +159,10 @@ main {
   background-color: #ffffff;
   border: 2px solid #00693e;
   border-radius: 12px;
-  padding: 0.5rem;
+  padding: 1rem;
   display: inline-block;
-  max-width: 90px;
-  max-height: 90px;
+  max-width: 160px;
+  max-height: 160px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -249,17 +292,6 @@ body {
   margin-top: 0.3rem;
 }
 
-.calendario {
-  width: 100%;
-  max-width: 180px;
-  margin: 0 auto;
-  background-color: white;
-  border-radius: 8px;
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  color: black;
-}
-
 #carousel {
   width: 100%;
   height: 100%;
@@ -268,67 +300,61 @@ body {
   align-items: center;
   border-radius: 10px;
   position: relative;
-  background-color: #ffffff; /* branco puro */
-  animation: variarBranco 30s infinite alternate;
+  background-color: #000000; 
+  animation: variarCinza 20s infinite alternate;
+  padding-bottom: 2rem;
 }
 
-#calendario {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-}
-
-#calendario th {
-  color: #00693e;
-  padding-bottom: 0.3rem;
-}
-
-#calendario td {
-  padding: 0.2rem;
-  border-radius: 4px;
-}
-
-#calendario td.dia-hoje {
-  background-color: #00693e;
+.data-completa {
+  font-size: 0.95rem;
+  font-weight: 600;
   color: white;
-  font-weight: bold;
+  text-align: center;
+  max-width: 100%;
+  padding: 0 0.5rem;
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
 }
 
-@keyframes variarVerde {
+@keyframes variarCinzaClaro {
   0% {
-    background-color: #00693e;
+    background-color: #e0e0e0;
   }
   25% {
-    background-color: #007f4a;
+    background-color: #e6e6e6;
   }
   50% {
-    background-color: #005f35;
+    background-color: #ebebeb;
   }
   75% {
-    background-color: #007a40;
-  }
-  100% {
-    background-color: #00693e;
-  }
-}
-
-@keyframes variarBranco {
-  0% {
-    background-color: #ffffff;
-  }
-  25% {
-    background-color: #f9f9f9;
-  }
-  50% {
     background-color: #f2f2f2;
   }
-  75% {
-    background-color: #fafafa;
-  }
   100% {
-    background-color: #ffffff;
+    background-color: #e0e0e0;
   }
 }
+
+@keyframes variarCinza {
+  0% {
+    background-color: #111111;
+  }
+  25% {
+    background-color: #1a1a1a;
+  }
+  50% {
+    background-color: #222222;
+  }
+  75% {
+    background-color: #2a2a2a;
+  }
+  100% {
+    background-color: #333333;
+  }
+}
+
 
 
 

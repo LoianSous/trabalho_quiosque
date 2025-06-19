@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const hoje = new Date();
   const ano = hoje.getFullYear();
-  const mes = hoje.getMonth(); 
+  const mes = hoje.getMonth();
   const diaHoje = hoje.getDate();
 
   const nomesMeses = [
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   mesAno.textContent = `${nomesMeses[mes]} ${ano}`;
 
-  const primeiroDia = new Date(ano, mes, 1).getDay(); 
+  const primeiroDia = new Date(ano, mes, 1).getDay();
   const totalDias = new Date(ano, mes + 1, 0).getDate();
 
   let html = "<tr>";
@@ -116,13 +116,25 @@ document.addEventListener("DOMContentLoaded", () => {
   if (images.length > 0) {
     ultimaImagem = images[images.length - 1].src.split('/').pop();
     totalImagens = images.length;
-    
+
     setInterval(() => {
-      images[index].style.display = "none";
+      images[index].classList.remove("ativo");
       index = (index + 1) % images.length;
-      images[index].style.display = "block";
+      images[index].classList.add("ativo");
+
     }, 5000);
   }
+  function alternarAsides() {
+    const asides = document.querySelectorAll("aside");
+    asides.forEach(aside => {
+      aside.classList.toggle("oculto");
+    });
+  }
+
+  setInterval(alternarAsides, 20000);
+
+  // Verificação de novas imagens
+  setInterval(verificarNovasImagens, 5000);
 });
 
 function verificarNovasImagens() {
@@ -145,6 +157,8 @@ function verificarNovasImagens() {
     .catch(err => console.error("Erro ao verificar imagens:", err));
 }
 
+let carouselInterval = null;
+
 function atualizarCarousel() {
   fetch(window.location.href + "?_=" + new Date().getTime())
     .then(response => response.text())
@@ -162,15 +176,38 @@ function atualizarCarousel() {
       // Reativar o carrossel após atualizar as imagens
       let index = 0;
       if (novasImagens.length > 0) {
-        novasImagens.forEach(img => img.style.display = "none");
-        novasImagens[0].style.display = "block";
-        setInterval(() => {
-          novasImagens[index].style.display = "none";
+        novasImagens.forEach(img => img.classList.remove("ativo"));
+        novasImagens[0].classList.add("ativo");
+
+        if (carouselInterval) clearInterval(carouselInterval);
+
+        carouselInterval = setInterval(() => {
+          novasImagens[index].classList.remove("ativo");
           index = (index + 1) % novasImagens.length;
-          novasImagens[index].style.display = "block";
+          novasImagens[index].classList.add("ativo");
         }, 5000);
       }
     });
 }
 
-setInterval(verificarNovasImagens, 5000);
+document.addEventListener("DOMContentLoaded", () => {
+  function atualizarDataCompleta() {
+  const hoje = new Date();
+  const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+  const diaSemana = diasSemana[hoje.getDay()];
+  const dia = hoje.getDate();
+  const mes = meses[hoje.getMonth()];
+  const ano = hoje.getFullYear();
+
+  const dataFormatada = `${diaSemana},<br>${dia} de ${mes} de ${ano}`;
+  const dataElemento = document.getElementById("data-completa");
+  if (dataElemento) dataElemento.innerHTML = dataFormatada;
+}
+
+  atualizarDataCompleta();
+});
+
+

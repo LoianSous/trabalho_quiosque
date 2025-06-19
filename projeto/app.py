@@ -3,11 +3,21 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.utils import secure_filename
+from datetime import timedelta, datetime
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from collections import defaultdict
 import os
 import sqlite3
 
 app = Flask(__name__)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[] 
+)
 app.secret_key = 'uma_chave_secreta_segura_aqui'
+app.permanent_session_lifetime = timedelta(minutes=10)  
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -17,6 +27,8 @@ app.config['MAIL_PASSWORD'] = 'dfbkqfcwnviccvrm'
 app.config['MAIL_DEFAULT_SENDER'] = 'loian9109@gmail.com'
 
 mail = Mail(app)
+
+tentativas_por_email = defaultdict(list)
 
 s = URLSafeTimedSerializer(app.secret_key)
 
@@ -29,6 +41,23 @@ def get_db_connection():
     conn = sqlite3.connect(app.config['DATABASE'])
     conn.row_factory = sqlite3.Row
     return conn
+
+def enviar_email(destinatario, assunto, corpo):
+    msg = Message(
+        subject=assunto,
+        recipients=[destinatario],
+        body=corpo
+    )
+    mail.send(msg)
+
+@app.before_request
+def verificar_expiracao_sessao():
+    if 'user_id' in session:
+        session.modified = True  
+    elif request.endpoint in ['adm', 'upload', 'cadastrar_tela', 'criar_usuario', 'atualizar_tipo_usuario',
+                              'deletar_usuario', 'reenviar_senha']:
+        flash('Sua sessão expirou. Faça login novamente.', 'warning')
+        return redirect(url_for('login'))
 
 @app.route('/check_new_images/<identificador>')
 def check_new_images(identificador):
@@ -59,6 +88,7 @@ def painel():
     conn.close()
     return render_template('painel_exibicao.html', imagens=imagens)
 
+@limiter.limit("5 per minute")
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -67,14 +97,64 @@ def login():
 
         conn = get_db_connection()
         user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-        conn.close()
 
-        if user and check_password_hash(user['senha'], senha):
-            session['user_id'] = user['id']
-            session['email'] = user['email']
-            return redirect(url_for('adm'))
+        if user:
+            bloqueado_until = user['bloqueado_until']
+            tentativas = user['tentativas_login']
+
+            if bloqueado_until:
+                bloqueado_dt = datetime.strptime(bloqueado_until, "%Y-%m-%d %H:%M:%S")
+                if datetime.utcnow() < bloqueado_dt:
+                    minutos = int((bloqueado_dt - datetime.utcnow()).total_seconds() // 60) + 1
+                    flash(f'Conta bloqueada por muitas tentativas. Tente novamente em {minutos} minutos.', 'danger')
+                    conn.close()
+                    return redirect(url_for('login'))
+
+            if check_password_hash(user['senha'], senha):
+                # Login correto: resetar tentativas e bloqueio
+                conn.execute('UPDATE users SET tentativas_login = 0, bloqueado_until = NULL WHERE id = ?', (user['id'],))
+                conn.commit()
+                conn.close()
+
+                session.permanent = True
+                session['user_id'] = user['id']
+                session['email'] = user['email']
+                flash('Logado com sucesso!', 'success')
+                return redirect(url_for('adm'))
+            else:
+                # Incrementa tentativas
+                tentativas += 1
+                if tentativas >= 5:
+                    bloqueado_novo = (datetime.utcnow() + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
+                    conn.execute('UPDATE users SET tentativas_login = ?, bloqueado_until = ? WHERE id = ?', (tentativas, bloqueado_novo, user['id']))
+                    conn.commit()
+
+                    # Enviar e-mail de alerta
+                    corpo = f"""Olá!
+
+Detectamos 5 tentativas de login malsucedidas na sua conta do Painel Administrativo IFMS ({email}).
+
+Se não foi você, recomendamos alterar sua senha imediatamente.
+
+Atenciosamente,
+Painel IFMS
+"""
+                    try:
+                        enviar_email(email, "Alerta de Tentativas de Login", corpo)
+                    except:
+                        pass
+
+                    flash("Muitas tentativas incorretas. Conta bloqueada por 5 minutos.", "danger")
+                else:
+                    conn.execute('UPDATE users SET tentativas_login = ? WHERE id = ?', (tentativas, user['id']))
+                    conn.commit()
+                    flash("Email ou senha incorretos.", "danger")
+                conn.close()
+                return redirect(url_for('login'))
+
         else:
-            flash('Email ou senha inválidos', 'danger')
+            conn.close()
+            flash("Email ou senha incorretos.", "danger")
             return redirect(url_for('login'))
 
     return render_template('painel_login.html')
@@ -150,6 +230,7 @@ def upload():
     conn.commit()
     conn.close()
 
+    flash('Imagem enviada com sucesso!', 'success')
     return redirect(url_for('adm', secao='upload')) 
 
 @app.route('/exibicao/<identificador>')
@@ -170,10 +251,15 @@ def delete_image(image_id):
     if img:
         caminho = os.path.join(app.config['UPLOAD_FOLDER'], img['filename'])
         if os.path.exists(caminho):
-            os.remove(caminho) 
+            os.remove(caminho)
 
         conn.execute('DELETE FROM imagens WHERE id = ?', (image_id,))
         conn.commit()
+        flash('Imagem removida com sucesso!', 'success')
+
+    else:
+        flash('Imagem não encontrada.', 'danger')
+
     conn.close()
     return redirect(url_for('adm', secao='upload'))
 
@@ -192,6 +278,8 @@ def criar_usuario():
     conn = get_db_connection()
     try:
         conn.execute('INSERT INTO users (email, senha, tipo) VALUES (?, ?, ?)', (email, senha_hash, tipo))
+        conn.commit()
+        conn.execute('UPDATE users SET token_usado = 0 WHERE email = ?', (email,))
         conn.commit()
         flash('Usuário criado com sucesso!', 'success')
 
@@ -245,10 +333,12 @@ def deletar_usuario(id):
 def reenviar_senha(id):
     conn = get_db_connection()
     user = conn.execute('SELECT email FROM users WHERE id = ?', (id,)).fetchone()
-    conn.close()
 
     if user:
         email = user['email']
+        conn.execute('UPDATE users SET token_usado = 0 WHERE id = ?', (id,))
+        conn.commit()
+
         token = s.dumps(email, salt='redefinir-senha')
         link = url_for('alterar_senha', token=token, _external=True)
 
@@ -282,24 +372,38 @@ def alterar_senha(token):
         flash('Link expirado ou inválido.', 'danger')
         return redirect(url_for('login'))
 
+    conn = get_db_connection()
+    user = conn.execute('SELECT token_usado FROM users WHERE email = ?', (email,)).fetchone()
+
+    if user is None:
+        conn.close()
+        flash('Usuário não encontrado.', 'danger')
+        return redirect(url_for('login'))
+
+    if user['token_usado']:
+        conn.close()
+        flash('Este link já foi utilizado.', 'warning')
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         nova_senha = request.form['nova_senha']
         hash_senha = generate_password_hash(nova_senha)
 
-        conn = get_db_connection()
-        conn.execute('UPDATE users SET senha = ? WHERE email = ?', (hash_senha, email))
+        conn.execute('UPDATE users SET senha = ?, token_usado = 1 WHERE email = ?', (hash_senha, email))
         conn.commit()
         conn.close()
 
         flash('Senha alterada com sucesso!', 'success')
         return redirect(url_for('login'))
 
+    conn.close()
     return render_template('redefinir_senha.html', email=email)
 
 
 @app.route('/logout')
 def logout():
     session.clear()
+    flash('Deslogado com sucesso!', 'success')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':

@@ -100,3 +100,41 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// --- Controle de expiração da sessão no frontend ---
+const TEMPO_SESSAO_MINUTOS = 10;
+const AVISO_MINUTOS = 5;  // quanto tempo antes avisar (em minutos)
+
+let tempoRestante = TEMPO_SESSAO_MINUTOS * 60; // em segundos
+let avisoEmitido = false;
+
+const intervalo = setInterval(() => {
+  tempoRestante--;
+
+  // Aviso 1 minuto antes
+  if (tempoRestante === AVISO_MINUTOS * 60 && !avisoEmitido) {
+    avisoEmitido = true;
+    alert("Sua sessão irá expirar em 1 minuto. Salve seu progresso.");
+  }
+
+  // Sessão expirada
+  if (tempoRestante <= 0) {
+    clearInterval(intervalo);
+    alert("Sua sessão expirou por inatividade. Você será redirecionado para o login.");
+    window.location.href = "/logout";
+  }
+}, 1000); // checa a cada segundo
+
+document.addEventListener("DOMContentLoaded", () => {
+  const toasts = document.querySelectorAll(".toast");
+
+  toasts.forEach((toast) => {
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(-10px)";
+      toast.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  });
+});
+

@@ -18,7 +18,7 @@ Este projeto é um painel administrativo e de exibição de imagens feito com Fl
 
 ```bash
 git clone https://github.com/seu-usuario/seu-repo.git
-cd seu-repo
+cd seu-repositorio
 ```
 
 ### 2. Crie e ative um ambiente virtual (opcional, mas recomendado)
@@ -50,7 +50,7 @@ python app.py
 
 ## Configurações
 
-Certifique-se de preencher as variáveis de e-mail em `app.py`:
+Isso aqui server para que um email de alterar senha seja mandado quando um usuario é criado:
 
 ```python
 app.config['MAIL_USERNAME'] = 'seu_email@gmail.com'
@@ -61,6 +61,17 @@ app.config['MAIL_PASSWORD'] = 'sua_senha_app'
 ## Uploads
 
 As imagens são armazenadas na pasta `static/uploads`. Ela será criada automaticamente se não existir.
+
+## Para visualizar o banco de dados ou modifica-lo, acesse o powershell, vá até o local do projeto, e digite:
+
+```bash
+sqlite3 database.db
+```
+Assim vai abrir o banco de dados e vai aparecer:
+
+ sqlite>
+
+Depois digite .tables para visualizar as tabelas.
 
 ## Comandos git utilizados:
 
