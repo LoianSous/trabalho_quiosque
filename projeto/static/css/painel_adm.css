@@ -250,6 +250,67 @@
   border-left: 6px solid #7a7a7a;
 }
 
+/* === Estilização dos cards de imagens não atribuídas === */
+
+.card.selecao-tela {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.card.selecao-tela:hover {
+  transform: translateY(-3px);
+}
+
+.card.selecao-tela .card-image img {
+  border-radius: 8px 8px 0 0;
+  object-fit: cover;
+  height: 180px;
+  width: 100%;
+}
+
+.card-footer {
+  border-top: 1px solid #f0f0f0;
+  padding: 0.5rem;
+}
+
+.card-footer-item select {
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 0.4rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.card-footer-item select:focus {
+  border-color: #00693e;
+  box-shadow: 0 0 0 2px rgba(0, 105, 62, 0.1);
+}
+
+/* Melhor centralização */
+#selecionarTelasSection .columns.is-multiline {
+  justify-content: center;
+}
+
+/* Título da seção */
+#selecionarTelasSection .box > h3 {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #00693e;
+}
+
+.card-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.card-checkbox input[type="checkbox"] {
+  margin-right: 0.5rem;
+  transform: scale(1.2);
+}
 
 
 

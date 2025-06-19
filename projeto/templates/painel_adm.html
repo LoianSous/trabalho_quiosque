@@ -168,12 +168,14 @@
                             <div class="control">
                                 <div class="select is-fullwidth">
                                     <select name="tela_id">
-                                        <option value="" selected>Tela principal</option>
                                         {% for tela in telas %}
-                                        <option value="{{ tela.id }}">{{ tela.nome }} ({{ tela.identificador }})
+                                        <option value="{{ tela.id }}" {% if tela.identificador=='principal' %}selected{%
+                                            endif %}>
+                                            {{ tela.nome }} ({{ tela.identificador }})
                                         </option>
                                         {% endfor %}
                                     </select>
+
                                 </div>
                             </div>
                         </div>
@@ -201,9 +203,9 @@
                                         </figure>
                                     </div>
                                     <footer class="card-footer">
-                                        <form action="{{ url_for('delete_image', image_id=img.id) }}" method="POST"
+                                        <form action="{{ url_for('remover_da_tela', image_id=img.id) }}" method="POST"
                                             class="card-footer-item p-0">
-                                            <button class="button is-danger is-fullwidth">Remover</button>
+                                            <button class="button is-warning is-fullwidth">Remover da Tela</button>
                                         </form>
                                     </footer>
                                 </div>
@@ -211,32 +213,8 @@
                             {% endfor %}
                         </div>
                         {% endfor %}
-
-                        {% if imagens_sem_tela %}
-                        <h3 class="title is-5 has-text-danger mt-5">Imagens da Tela Principal</h3>
-                        <div class="columns is-multiline">
-                            {% for img in imagens_sem_tela %}
-                            <div class="column is-3">
-                                <div class="card">
-                                    <div class="card-image">
-                                        <figure class="image is-4by3">
-                                            <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}"
-                                                alt="Imagem">
-                                        </figure>
-                                    </div>
-                                    <footer class="card-footer">
-                                        <form action="{{ url_for('delete_image', image_id=img.id) }}" method="POST"
-                                            class="card-footer-item p-0">
-                                            <button class="button is-danger is-fullwidth">Remover</button>
-                                        </form>
-                                    </footer>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
                     </div>
+
                 </div>
             </section>
 
@@ -245,29 +223,86 @@
                     <h2 class="title is-4">Selecionar Telas de Exibição</h2>
                     <p class="mb-4">Selecione quais telas devem exibir os conteúdos atuais:</p>
 
-                    <div class="columns is-multiline">
-                        <div class="column is-6">
-                            <label class="checkbox">
-                                <input type="checkbox" /> Monitor 1 - Entrada
-                            </label>
-                        </div>
-                        <div class="column is-6">
-                            <label class="checkbox">
-                                <input type="checkbox" /> Monitor 2 - Cantina
-                            </label>
-                        </div>
-                        <div class="column is-6">
-                            <label class="checkbox">
-                                <input type="checkbox" /> Monitor 3 - Laboratório
-                            </label>
-                        </div>
-                        <div class="column is-6">
-                            <label class="checkbox">
-                                <input type="checkbox" /> Monitor 4 - Biblioteca
-                            </label>
-                        </div>
+                    <div class="box mt-4">
+                        <h3 class="title is-5 mb-4 has-text-success">Imagens não atribuídas</h3>
+
+                        {% if imagens_sem_tela %}
+                        <form method="POST" id="formExcluirMultiplas">
+                            <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                                <button type="button" class="button is-info is-light" onclick="toggleSelecionarTodos()">
+                                    <i class="fas fa-check-square mr-1"></i> Selecionar tudo
+                                </button>
+
+                                {% if tipo_usuario == 'admin' %}
+                                {% set url_delete = url_for('delete_multiple_images') %}
+                                <button type="button" class="button is-danger"
+                                    onclick="abrirModal('Remover Imagem', '{{ url_delete }}', 'Tem certeza que deseja apagar as imagens selecionadas?')">
+                                    <i class="fas fa-trash-alt mr-1"></i> Apagar Selecionadas
+                                </button>
+
+                                {% else %}
+                                <button class="button is-light has-text-grey" disabled>
+                                    <i class="fas fa-ban mr-1"></i> Acesso restrito
+                                </button>
+                                {% endif %}
+
+                            </div>
+
+                            <div class="columns is-multiline is-centered">
+                                {% for img in imagens_sem_tela %}
+                                <div class="column is-3">
+                                    <div class="card selecao-tela">
+                                        <div class="card-image">
+                                            <figure class="image is-4by3">
+                                                <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}"
+                                                    alt="Imagem">
+                                            </figure>
+                                        </div>
+                                        <div class="p-2 has-text-centered">
+                                            <label class="checkbox card-checkbox">
+                                                <input type="checkbox" name="ids[]" value="{{ img.id }}">
+                                                Selecionar
+                                            </label>
+                                        </div>
+                                        <footer class="card-footer is-flex is-flex-direction-column p-3">
+                                            <form action="{{ url_for('atribuir_tela') }}" method="POST" class="mb-2">
+                                                <input type="hidden" name="imagem_id" value="{{ img.id }}">
+                                                <div class="select is-small is-fullwidth mb-2">
+                                                    <select name="tela_id" required>
+                                                        <option disabled selected>Enviar para tela...</option>
+                                                        {% for tela in telas %}
+                                                        <option value="{{ tela.id }}">{{ tela.nome }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <button class="button is-success is-small is-fullwidth" type="submit">
+                                                    <i class="fas fa-check mr-1"></i> Confirmar
+                                                </button>
+                                            </form>
+
+                                            {% if tipo_usuario == 'admin' %}
+                                            {% set url_img_delete = url_for('delete_image', image_id=img.id) %}
+                                            <button class="button is-danger is-small is-fullwidth" type="button"
+                                                onclick="abrirModal('Remover Imagem', '{{ url_img_delete }}', 'Tem certeza que deseja remover esta imagem do banco de dados?')">
+                                                <i class="fas fa-trash mr-1"></i> Apagar
+                                            </button>
+                                            {% else %}
+                                            <button class="button is-light is-small has-text-grey is-fullwidth"
+                                                disabled>
+                                                <i class="fas fa-ban mr-1"></i> Acesso restrito
+                                            </button>
+                                            {% endif %}
+
+                                        </footer>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </form>
+                        {% else %}
+                        <p class="has-text-grey">Nenhuma imagem sem tela associada.</p>
+                        {% endif %}
                     </div>
-                    <button class="button is-success mt-4">Confirmar Telas Selecionadas</button>
                 </div>
             </section>
 
@@ -355,7 +390,7 @@
                                     </thead>
                                     <tbody>
                                         {% for usuario in usuarios %}
-                                        <tr>
+                                        <tr class="{% if usuario.ativo == 0 %}has-text-grey-light{% endif %}">
                                             <td>{{ usuario.email }}</td>
                                             <td>
                                                 <form action="{{ url_for('atualizar_tipo_usuario', id=usuario.id) }}"
@@ -377,10 +412,34 @@
                                                         <i class="fas fa-envelope"></i>
                                                     </button>
                                                 </form>
+                                                {% set status_text = 'desativar' if usuario.ativo == 1 else 'ativar' %}
+                                                {% set novo_status = 0 if usuario.ativo == 1 else 1 %}
+                                                <form action="{{ url_for('alterar_status_usuario', id=usuario.id) }}"
+                                                    method="POST" style="display: inline;">
+                                                    <button
+                                                        class="button is-small {% if usuario.id == session['user_id'] %}is-light has-text-grey{% else %}{{ 'is-warning' if usuario.ativo == 1 else 'is-success' }}{% endif %}"
+                                                        type="button"
+                                                        title="{{ 'Desativar' if usuario.ativo == 1 else 'Ativar' }}" {%
+                                                        if usuario.id !=session['user_id']
+                                                        %}onclick="abrirModal('Alterar Status', '{{ url_for('alterar_status_usuario', id=usuario.id) }}', 'Deseja realmente {{ status_text }} esta conta?', '{{ novo_status }}')"
+                                                        {% else %}disabled{% endif %}>
+                                                        {% if usuario.ativo == 1 %}
+                                                        <i class="fas fa-user-slash"></i>
+                                                        {% else %}
+                                                        <i class="fas fa-user-check"></i>
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
                                                 <form action="{{ url_for('deletar_usuario', id=usuario.id) }}"
                                                     method="POST" style="display: inline;">
-                                                    <button class="button is-small is-danger" title="Excluir"
-                                                        onclick="return confirm('Tem certeza que deseja excluir este usuário?')">
+                                                    {% set excluir_url = url_for('deletar_usuario', id=usuario.id) %}
+                                                    <button
+                                                        class="button is-small {% if usuario.id == session['user_id'] %}is-light has-text-grey{% else %}is-danger{% endif %}"
+                                                        type="button"
+                                                        title="{% if usuario.id == session['user_id'] %}Você não pode excluir sua própria conta{% else %}Excluir{% endif %}"
+                                                        {% if usuario.id !=session['user_id']
+                                                        %}onclick="abrirModal('Excluir Conta', '{{ excluir_url }}', 'Tem certeza que deseja excluir esta conta permanentemente?')"
+                                                        {% else %}disabled{% endif %}>
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
@@ -402,6 +461,33 @@
         <div class="logo-text">TADS.TL</div>
         <p>© 2025 IFMS - TADS-4</p>
     </footer>
+
+    <div class="modal" id="confirmacaoModal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <form id="confirmForm" method="POST">
+                <input type="hidden" name="ativo" id="campoAtivo">
+                <header class="modal-card-head">
+                    <p class="modal-card-title" id="modalTitle">Confirmação</p>
+                    <button class="delete" type="button" aria-label="close" onclick="fecharModal()"></button>
+                </header>
+                <section class="modal-card-body">
+                    <p id="modalMessage">Você tem certeza que deseja realizar esta ação?</p>
+                    <div class="field mt-4">
+                        <label class="label">Digite sua senha para confirmar:</label>
+                        <div class="control">
+                            <input class="input" type="password" name="senha_confirmacao" required />
+                        </div>
+                    </div>
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button is-danger" type="submit">Confirmar</button>
+                    <button class="button" type="button" onclick="fecharModal()">Cancelar</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
 </body>
 {% if tipo_usuario == 'comum' %}
 <style>

@@ -84,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
     botoesMenu[botoesPorSecao[secao]].click();
   }
 
-
   const fileInput = document.getElementById('fileInput');
   const fileName = document.getElementById('fileName');
   const placeholder = document.getElementById('uploadPlaceholder');
@@ -101,29 +100,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// --- Controle de expiração da sessão no frontend ---
 const TEMPO_SESSAO_MINUTOS = 10;
-const AVISO_MINUTOS = 5;  // quanto tempo antes avisar (em minutos)
+const AVISO_MINUTOS = 5;  
 
-let tempoRestante = TEMPO_SESSAO_MINUTOS * 60; // em segundos
+let tempoRestante = TEMPO_SESSAO_MINUTOS * 60; 
 let avisoEmitido = false;
 
 const intervalo = setInterval(() => {
   tempoRestante--;
 
-  // Aviso 1 minuto antes
   if (tempoRestante === AVISO_MINUTOS * 60 && !avisoEmitido) {
     avisoEmitido = true;
     alert("Sua sessão irá expirar em 1 minuto. Salve seu progresso.");
   }
 
-  // Sessão expirada
   if (tempoRestante <= 0) {
     clearInterval(intervalo);
     alert("Sua sessão expirou por inatividade. Você será redirecionado para o login.");
     window.location.href = "/logout";
   }
-}, 1000); // checa a cada segundo
+}, 1000); 
 
 document.addEventListener("DOMContentLoaded", () => {
   const toasts = document.querySelectorAll(".toast");
@@ -137,4 +133,61 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 4000);
   });
 });
+
+function abrirModal(acao, url, mensagem, valorAtivo = null) {
+    const form = document.getElementById("confirmForm");
+    form.action = url;
+
+    document.getElementById("modalTitle").textContent = acao;
+    document.getElementById("modalMessage").textContent = mensagem;
+
+    const campoAtivo = document.getElementById("campoAtivo");
+
+    form.querySelectorAll('input[name="ids[]"]').forEach(el => el.remove());
+
+    if (valorAtivo !== null && campoAtivo) {
+        campoAtivo.name = "ativo";
+        campoAtivo.value = valorAtivo;
+    } else if (campoAtivo) {
+        campoAtivo.removeAttribute("name");
+        campoAtivo.removeAttribute("value");
+    }
+
+    if (acao.toLowerCase().includes("imagem")) {
+        const selecionados = Array.from(document.querySelectorAll('input[name="ids[]"]:checked'));
+
+        if (selecionados.length === 0) {
+            alert("Nenhuma imagem selecionada.");
+            return;
+        }
+
+        selecionados.forEach(cb => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "ids[]";
+            input.value = cb.value;
+            form.appendChild(input);
+        });
+    }
+
+    document.getElementById("confirmacaoModal").classList.add("is-active");
+}
+
+function fecharModal() {
+  document.getElementById("confirmacaoModal").classList.remove("is-active");
+}
+
+let todosSelecionados = false;
+
+    function toggleSelecionarTodos() {
+        const checkboxes = document.querySelectorAll('input[name="ids[]"]');
+        todosSelecionados = !todosSelecionados;
+
+        checkboxes.forEach(cb => cb.checked = todosSelecionados);
+
+        const botao = document.querySelector('button[onclick="toggleSelecionarTodos()"]');
+        botao.innerHTML = todosSelecionados
+            ? '<i class="fas fa-times-circle mr-1"></i> Deselecionar tudo'
+            : '<i class="fas fa-check-square mr-1"></i> Selecionar tudo';
+    }
 

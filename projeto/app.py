@@ -63,14 +63,14 @@ def verificar_expiracao_sessao():
 def check_new_images(identificador):
     conn = get_db_connection()
 
-    if identificador == "principal":
-        imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id IS NULL ORDER BY id DESC').fetchall()
+    tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', (identificador,)).fetchone()
+    if tela:
+        imagens = conn.execute(
+            'SELECT filename FROM imagens WHERE tela_id = ? ORDER BY id DESC',
+            (tela['id'],)
+        ).fetchall()
     else:
-        tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', (identificador,)).fetchone()
-        if tela:
-            imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id = ? ORDER BY id DESC', (tela['id'],)).fetchall()
-        else:
-            imagens = []
+        imagens = []
 
     total = len(imagens)
     ultima = imagens[0]['filename'] if imagens else None
@@ -84,9 +84,16 @@ def check_new_images(identificador):
 @app.route('/')
 def painel():
     conn = get_db_connection()
-    imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id IS NULL').fetchall()
+    tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', ('principal',)).fetchone()
+    imagens = []
+    if tela:
+        imagens = conn.execute(
+            'SELECT filename FROM imagens WHERE tela_id = ? ORDER BY id DESC',
+            (tela['id'],)
+        ).fetchall()
     conn.close()
     return render_template('painel_exibicao.html', imagens=imagens)
+
 
 @limiter.limit("5 per minute")
 @app.route('/login', methods=['GET', 'POST'])
@@ -99,6 +106,12 @@ def login():
         user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
 
         if user:
+            # ✅ Verifica se a conta está desativada
+            if user['ativo'] == 0:
+                flash("Esta conta está desativada. Contate o administrador.", "danger")
+                conn.close()
+                return redirect(url_for('login'))
+
             bloqueado_until = user['bloqueado_until']
             tentativas = user['tentativas_login']
 
@@ -159,34 +172,74 @@ Painel IFMS
 
     return render_template('painel_login.html')
 
+@app.route('/alterar_status_usuario/<int:id>', methods=['POST'])
+def alterar_status_usuario(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if id == session['user_id']:
+        flash('Você não pode desativar sua própria conta enquanto estiver logado.', 'warning')
+        return redirect(url_for('adm', secao='gerenciar'))
+
+    senha_digitada = request.form.get('senha_confirmacao')
+    conn = get_db_connection()
+    user_logado = conn.execute('SELECT senha FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+
+    if not user_logado or not check_password_hash(user_logado['senha'], senha_digitada):
+        conn.close()
+        flash('Senha incorreta. Operação cancelada.', 'danger')
+        return redirect(url_for('adm', secao='gerenciar'))
+
+    novo_status = int(request.form['ativo'])
+    conn.execute('UPDATE users SET ativo = ? WHERE id = ?', (novo_status, id))
+    conn.commit()
+    conn.close()
+    flash('Status do usuário atualizado.', 'success')
+    return redirect(url_for('adm', secao='gerenciar'))
+
 @app.route('/adm')
 def adm():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+
     secao = request.args.get('secao', default='inicio')
     conn = get_db_connection()
+
     telas = conn.execute('SELECT * FROM telas').fetchall()
+
+    tela_principal = conn.execute("SELECT id FROM telas WHERE identificador = 'principal'").fetchone()
+    id_tela_principal = tela_principal['id'] if tela_principal else None
+
     imagens_por_tela = {}
     telas_com_imagens = []
+
     for tela in telas:
         imagens = conn.execute('SELECT * FROM imagens WHERE tela_id = ?', (tela['id'],)).fetchall()
         imagens_por_tela[tela['id']] = imagens
         if imagens:
             telas_com_imagens.append(tela)
+
+    imagens_tela_principal = []
+    if id_tela_principal:
+        imagens_tela_principal = conn.execute(
+            'SELECT * FROM imagens WHERE tela_id = ?', (id_tela_principal,)
+        ).fetchall()
+
     imagens_sem_tela = conn.execute('SELECT * FROM imagens WHERE tela_id IS NULL').fetchall()
-    if imagens_sem_tela:
-        telas_com_imagens.append({
-        'nome': 'Tela Principal',
-        'identificador': 'principal'
-    })
-    total_imagens = conn.execute('SELECT COUNT(*) as total FROM imagens').fetchone()['total']
-    total_em_exibicao = sum(len(imagens) for imagens in imagens_por_tela.values()) + len(imagens_sem_tela)
+
     user = conn.execute('SELECT tipo FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-    usuarios = conn.execute('SELECT id, email, tipo FROM users').fetchall()
+
+    total_imagens = conn.execute('SELECT COUNT(*) as total FROM imagens').fetchone()['total']
+    total_em_exibicao = sum(len(imagens) for imagens in imagens_por_tela.values()) + len(imagens_tela_principal)
+
+    usuarios = conn.execute('SELECT id, email, tipo, ativo FROM users').fetchall()
+
     conn.close()
+
     return render_template('painel_adm.html',
                            telas=telas,
                            imagens_por_tela=imagens_por_tela,
+                           imagens_tela_principal=imagens_tela_principal,
                            imagens_sem_tela=imagens_sem_tela,
                            telas_com_imagens=telas_com_imagens,
                            total_imagens=total_imagens,
@@ -220,18 +273,16 @@ def upload():
     filename = secure_filename(imagem.filename)
     imagem.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
+    tela_id_str = request.form.get('tela_id')
+    tela_id = int(tela_id_str) if tela_id_str else None
+
     conn = get_db_connection()
-    tela_id = request.form.get('tela_id')
-    if not tela_id:
-        tela_id = None
-    else:
-        tela_id = int(tela_id)
     conn.execute('INSERT INTO imagens (filename, tela_id) VALUES (?, ?)', (filename, tela_id))
     conn.commit()
     conn.close()
 
     flash('Imagem enviada com sucesso!', 'success')
-    return redirect(url_for('adm', secao='upload')) 
+    return redirect(url_for('adm', secao='upload'))
 
 @app.route('/exibicao/<identificador>')
 def painel_exibicao_por_tela(identificador):
@@ -245,9 +296,19 @@ def painel_exibicao_por_tela(identificador):
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
 def delete_image(image_id):
-    conn = get_db_connection()
-    img = conn.execute('SELECT filename FROM imagens WHERE id = ?', (image_id,)).fetchone()
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
+    senha_digitada = request.form.get('senha_confirmacao', '').strip()
+    conn = get_db_connection()
+    
+    usuario = conn.execute('SELECT senha FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    if not usuario or not check_password_hash(usuario['senha'], senha_digitada):
+        flash('Senha incorreta. A imagem não foi removida.', 'danger')
+        conn.close()
+        return redirect(url_for('adm', secao='selecionar'))
+
+    img = conn.execute('SELECT filename FROM imagens WHERE id = ?', (image_id,)).fetchone()
     if img:
         caminho = os.path.join(app.config['UPLOAD_FOLDER'], img['filename'])
         if os.path.exists(caminho):
@@ -256,12 +317,72 @@ def delete_image(image_id):
         conn.execute('DELETE FROM imagens WHERE id = ?', (image_id,))
         conn.commit()
         flash('Imagem removida com sucesso!', 'success')
-
     else:
         flash('Imagem não encontrada.', 'danger')
 
     conn.close()
+    return redirect(url_for('adm', secao='selecionar'))
+
+@app.route('/delete_multiple_images', methods=['POST'])
+def delete_multiple_images():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    senha_digitada = request.form.get('senha_confirmacao', '').strip()
+    ids = request.form.getlist("ids[]")
+
+    if not ids or ids == ['']:
+        flash('Nenhuma imagem selecionada.', 'warning')
+        return redirect(url_for('adm', secao='selecionar'))
+
+    conn = get_db_connection()
+    usuario = conn.execute('SELECT senha FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+
+    if not usuario or not check_password_hash(usuario['senha'], senha_digitada):
+        conn.close()
+        flash('Senha incorreta. As imagens não foram removidas.', 'danger')
+        return redirect(url_for('adm', secao='selecionar'))
+
+    removidas = 0
+    for image_id in ids:
+        img = conn.execute('SELECT filename FROM imagens WHERE id = ?', (image_id,)).fetchone()
+        if img:
+            caminho = os.path.join(app.config['UPLOAD_FOLDER'], img['filename'])
+            if os.path.exists(caminho):
+                os.remove(caminho)
+            conn.execute('DELETE FROM imagens WHERE id = ?', (image_id,))
+            removidas += 1
+
+    conn.commit()
+    conn.close()
+
+    flash(f'{removidas} imagem(ns) removida(s) com sucesso!', 'success')
+    return redirect(url_for('adm', secao='selecionar'))
+
+@app.route('/remover_da_tela/<int:image_id>', methods=['POST'])
+def remover_da_tela(image_id):
+    conn = get_db_connection()
+    conn.execute('UPDATE imagens SET tela_id = NULL WHERE id = ?', (image_id,))
+    conn.commit()
+    conn.close()
+    flash('Imagem removida da tela, mas mantida no banco de dados.', 'info')
     return redirect(url_for('adm', secao='upload'))
+
+@app.route('/atribuir_tela', methods=['POST'])
+def atribuir_tela():
+    imagem_id = request.form.get('imagem_id')
+    tela_id = request.form.get('tela_id')
+
+    if imagem_id and tela_id:
+        conn = get_db_connection()
+        conn.execute('UPDATE imagens SET tela_id = ? WHERE id = ?', (tela_id, imagem_id))
+        conn.commit()
+        conn.close()
+        flash('Imagem atribuída à nova tela com sucesso!', 'success')
+    else:
+        flash('Erro ao atribuir tela. Dados incompletos.', 'danger')
+
+    return redirect(url_for('adm', secao='selecionar'))
 
 @app.route('/criar_usuario', methods=['POST'])
 def criar_usuario():
@@ -322,11 +443,26 @@ def atualizar_tipo_usuario(id):
 
 @app.route('/deletar_usuario/<int:id>', methods=['POST'])
 def deletar_usuario(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if id == session['user_id']:
+        flash('Você não pode excluir sua própria conta enquanto estiver logado.', 'warning')
+        return redirect(url_for('adm', secao='gerenciar'))
+
+    senha_digitada = request.form.get('senha_confirmacao')
     conn = get_db_connection()
+    user_logado = conn.execute('SELECT senha FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+
+    if not user_logado or not check_password_hash(user_logado['senha'], senha_digitada):
+        conn.close()
+        flash('Senha incorreta. Operação cancelada.', 'danger')
+        return redirect(url_for('adm', secao='gerenciar'))
+
     conn.execute('DELETE FROM users WHERE id = ?', (id,))
     conn.commit()
     conn.close()
-    flash('Usuário removido com sucesso.', 'success')
+    flash('Usuário removido com sucesso!', 'success')
     return redirect(url_for('adm', secao='gerenciar'))
 
 @app.route('/reenviar_senha/<int:id>', methods=['POST'])

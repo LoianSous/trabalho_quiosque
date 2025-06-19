@@ -173,7 +173,6 @@ function atualizarCarousel() {
         carousel.appendChild(img);
       });
 
-      // Reativar o carrossel após atualizar as imagens
       let index = 0;
       if (novasImagens.length > 0) {
         novasImagens.forEach(img => img.classList.remove("ativo"));
