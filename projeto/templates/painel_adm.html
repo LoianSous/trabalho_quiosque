@@ -153,7 +153,7 @@
                     <h2 class="title is-4">Adicionar Imagem</h2>
                     <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
                         <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-                            <input id="fileInput" type="file" name="imagem" accept="image/*" required hidden>
+                            <input id="fileInput" type="file" name="imagens" accept="image/*" multiple required hidden>
                             <div id="uploadPlaceholder">
                                 <span class="icon is-large">
                                     <i class="fas fa-plus fa-3x"></i>
@@ -168,6 +168,7 @@
                             <div class="control">
                                 <div class="select is-fullwidth">
                                     <select name="tela_id">
+                                        <option value="">Nenhuma tela</option>
                                         {% for tela in telas %}
                                         <option value="{{ tela.id }}" {% if tela.identificador=='principal' %}selected{%
                                             endif %}>
@@ -175,7 +176,6 @@
                                         </option>
                                         {% endfor %}
                                     </select>
-
                                 </div>
                             </div>
                         </div>
@@ -205,6 +205,7 @@
                                     <footer class="card-footer">
                                         <form action="{{ url_for('remover_da_tela', image_id=img.id) }}" method="POST"
                                             class="card-footer-item p-0">
+                                            <input type="hidden" name="tela_id" value="{{ tela.id }}">
                                             <button class="button is-warning is-fullwidth">Remover da Tela</button>
                                         </form>
                                     </footer>
@@ -227,78 +228,110 @@
                         <h3 class="title is-5 mb-4 has-text-success">Imagens não atribuídas</h3>
 
                         {% if imagens_sem_tela %}
-                        <form method="POST" id="formExcluirMultiplas">
-                            <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
-                                <button type="button" class="button is-info is-light" onclick="toggleSelecionarTodos()">
-                                    <i class="fas fa-check-square mr-1"></i> Selecionar tudo
-                                </button>
+                        <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                            <button type="button" class="button is-info is-light" onclick="toggleSelecionarTodos()">
+                                <i class="fas fa-check-square mr-1"></i> Selecionar tudo
+                            </button>
 
-                                {% if tipo_usuario == 'admin' %}
-                                {% set url_delete = url_for('delete_multiple_images') %}
-                                <button type="button" class="button is-danger"
-                                    onclick="abrirModal('Remover Imagem', '{{ url_delete }}', 'Tem certeza que deseja apagar as imagens selecionadas?')">
-                                    <i class="fas fa-trash-alt mr-1"></i> Apagar Selecionadas
-                                </button>
+                            {% if tipo_usuario == 'admin' %}
+                            {% set url_delete = url_for('delete_multiple_images') %}
+                            <button type="button" class="button is-danger"
+                                onclick="abrirModal('Remover Imagem', '{{ url_delete }}', 'Tem certeza que deseja apagar as imagens selecionadas?')">
+                                <i class="fas fa-trash-alt mr-1"></i> Apagar Selecionadas
+                            </button>
+                            {% else %}
+                            <button class="button is-light has-text-grey" disabled>
+                                <i class="fas fa-ban mr-1"></i> Acesso restrito
+                            </button>
+                            {% endif %}
+                        </div>
 
-                                {% else %}
-                                <button class="button is-light has-text-grey" disabled>
-                                    <i class="fas fa-ban mr-1"></i> Acesso restrito
-                                </button>
-                                {% endif %}
+                        <div class="columns is-multiline is-centered">
+                            {% for img in imagens_sem_tela %}
+                            <div class="column is-3">
+                                <div class="card selecao-tela">
+                                    <div class="card-image">
+                                        <figure class="image is-4by3">
+                                            <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}"
+                                                alt="Imagem">
+                                        </figure>
+                                    </div>
 
-                            </div>
+                                    <div class="has-text-centered p-2">
+                                        <label class="checkbox card-checkbox">
+                                            <input type="checkbox" class="selecionar-checkbox" name="ids[]"
+                                                value="{{ img.id }}">
+                                            Selecionar
+                                        </label>
 
-                            <div class="columns is-multiline is-centered">
-                                {% for img in imagens_sem_tela %}
-                                <div class="column is-3">
-                                    <div class="card selecao-tela">
-                                        <div class="card-image">
-                                            <figure class="image is-4by3">
-                                                <img src="{{ url_for('static', filename='uploads/' ~ img.filename) }}"
-                                                    alt="Imagem">
-                                            </figure>
+                                        {% if img.inicio_exibicao or img.fim_exibicao %}
+                                        <div class="mt-2">
+                                            <span class="tag is-warning is-light is-small">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                Exibição agendada
+                                            </span>
                                         </div>
-                                        <div class="p-2 has-text-centered">
-                                            <label class="checkbox card-checkbox">
-                                                <input type="checkbox" name="ids[]" value="{{ img.id }}">
-                                                Selecionar
-                                            </label>
-                                        </div>
-                                        <footer class="card-footer is-flex is-flex-direction-column p-3">
-                                            <form action="{{ url_for('atribuir_tela') }}" method="POST" class="mb-2">
-                                                <input type="hidden" name="imagem_id" value="{{ img.id }}">
-                                                <div class="select is-small is-fullwidth mb-2">
-                                                    <select name="tela_id" required>
-                                                        <option disabled selected>Enviar para tela...</option>
-                                                        {% for tela in telas %}
-                                                        <option value="{{ tela.id }}">{{ tela.nome }}</option>
-                                                        {% endfor %}
-                                                    </select>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="formulario-atribuir">
+                                        <form action="{{ url_for('atribuir_tela') }}" method="POST" class="p-3">
+                                            <input type="hidden" name="imagem_id" value="{{ img.id }}">
+
+                                            <div class="field mb-2">
+                                                <label class="label is-small">Selecionar Telas</label>
+                                                <div class="checkboxes">
+                                                    {% for tela in telas %}
+                                                    <label class="checkbox">
+                                                        <input type="checkbox" name="tela_ids" value="{{ tela.id }}">
+                                                        {{ tela.nome }}
+                                                    </label>
+                                                    {% endfor %}
                                                 </div>
-                                                <button class="button is-success is-small is-fullwidth" type="submit">
-                                                    <i class="fas fa-check mr-1"></i> Confirmar
-                                                </button>
-                                            </form>
+                                            </div>
 
-                                            {% if tipo_usuario == 'admin' %}
-                                            {% set url_img_delete = url_for('delete_image', image_id=img.id) %}
+                                            <div class="field mb-2">
+                                                <label class="label is-small">Início da Exibição (opcional)</label>
+                                                <input class="input is-small" type="datetime-local"
+                                                    name="inicio_exibicao"
+                                                    value="{{ img.inicio_exibicao|default('', true) }}">
+                                            </div>
+
+                                            <div class="field mb-3">
+                                                <label class="label is-small">Fim da Exibição (opcional)</label>
+                                                <input class="input is-small" type="datetime-local" name="fim_exibicao"
+                                                    value="{{ img.fim_exibicao|default('', true) }}">
+                                            </div>
+
+                                            <button class="button is-success is-small is-fullwidth" type="submit">
+                                                <i class="fas fa-check mr-1"></i> Confirmar
+                                            </button>
+                                        </form>
+
+                                        {% if tipo_usuario == 'admin' %}
+                                        {% set url_img_delete = url_for('delete_image', image_id=img.id) %}
+                                        <div class="p-3 pt-0">
                                             <button class="button is-danger is-small is-fullwidth" type="button"
                                                 onclick="abrirModal('Remover Imagem', '{{ url_img_delete }}', 'Tem certeza que deseja remover esta imagem do banco de dados?')">
                                                 <i class="fas fa-trash mr-1"></i> Apagar
                                             </button>
-                                            {% else %}
+                                        </div>
+                                        {% else %}
+                                        <div class="p-3 pt-0">
                                             <button class="button is-light is-small has-text-grey is-fullwidth"
                                                 disabled>
                                                 <i class="fas fa-ban mr-1"></i> Acesso restrito
                                             </button>
-                                            {% endif %}
-
-                                        </footer>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                {% endfor %}
                             </div>
-                        </form>
+                            {% endfor %}
+                        </div>
+
+                        <form method="POST" id="formExcluirMultiplas" style="display: none;"></form>
+
                         {% else %}
                         <p class="has-text-grey">Nenhuma imagem sem tela associada.</p>
                         {% endif %}
@@ -328,6 +361,42 @@
 
                         <button class="button is-primary mt-3" type="submit">Cadastrar Tela</button>
                     </form>
+
+                    <h3 class="title is-5 mt-6">Telas Cadastradas</h3>
+                    <div class="table-container">
+                        <table class="table is-fullwidth is-striped">
+                            <thead>
+  <tr>
+    <th>Nome</th>
+    <th>Identificador</th>
+    <th>Status</th>
+    <th class="has-text-centered">Ações</th>
+  </tr>
+</thead>
+<tbody>
+  {% for tela in telas_status %}
+  <tr>
+    <td>{{ tela.nome }}</td>
+    <td>{{ tela.identificador }}</td>
+    <td>
+      {% if tela.status == 'ligada' %}
+      <span class="tag is-success is-medium">Ligada</span>
+      {% else %}
+      <span class="tag is-danger">Desligada</span>
+      {% endif %}
+    </td>
+    <td class="has-text-centered">
+      {% set excluir_url = url_for('deletar_tela', tela_id=tela.id) %}
+      <button class="button is-danger is-small"
+        onclick="abrirModal('Excluir Tela', '{{ excluir_url }}', 'Tem certeza que deseja excluir esta tela?')">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
+                        </table>
+                    </div>
 
                 </div>
             </section>

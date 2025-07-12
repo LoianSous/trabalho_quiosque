@@ -209,4 +209,12 @@ document.addEventListener("DOMContentLoaded", () => {
   atualizarDataCompleta();
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof IDENTIFICADOR_TELA !== "undefined") {
+    setInterval(() => {
+      fetch(`/ping/${IDENTIFICADOR_TELA}`, { method: 'POST' });
+    }, 5000); 
+  }
+});
+
 

@@ -250,8 +250,6 @@
   border-left: 6px solid #7a7a7a;
 }
 
-/* === Estilização dos cards de imagens não atribuídas === */
-
 .card.selecao-tela {
   background: white;
   border-radius: 10px;
@@ -268,6 +266,56 @@
   object-fit: cover;
   height: 180px;
   width: 100%;
+}
+
+.card.selecao-tela select {
+  font-size: 1rem;
+  padding: 0.5rem;
+  color: #222;              
+  background-color: #fff;   
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.card.selecao-tela select option {
+  font-size: 1rem;
+  color: #111;            
+  background-color: #fff;  
+}
+
+.checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checkboxes label {
+  background: #f5f5f5;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.checkboxes label:hover {
+  background: #e6f9f0;
+}
+
+.checkboxes input[type="checkbox"] {
+  transform: scale(1.2);
+}
+
+.card .formulario-atribuir {
+  display: none;
+}
+
+.card.selecionado .formulario-atribuir {
+  display: block;
 }
 
 .card-footer {
@@ -288,12 +336,10 @@
   box-shadow: 0 0 0 2px rgba(0, 105, 62, 0.1);
 }
 
-/* Melhor centralização */
 #selecionarTelasSection .columns.is-multiline {
   justify-content: center;
 }
 
-/* Título da seção */
 #selecionarTelasSection .box > h3 {
   font-weight: 700;
   font-size: 1.2rem;

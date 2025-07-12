@@ -58,24 +58,42 @@ def verificar_expiracao_sessao():
                               'deletar_usuario', 'reenviar_senha']:
         flash('Sua sessão expirou. Faça login novamente.', 'warning')
         return redirect(url_for('login'))
+    
+@app.route('/ping/<identificador>', methods=['POST'])
+def ping_tela(identificador):
+    conn = get_db_connection()
+    conn.execute("""
+        UPDATE telas
+        SET ultimo_ping = ?
+        WHERE identificador = ?
+    """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), identificador))
+    conn.commit()
+    conn.close()
+    return '', 204  
 
 @app.route('/check_new_images/<identificador>')
 def check_new_images(identificador):
     conn = get_db_connection()
 
     tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', (identificador,)).fetchone()
+    imagens = []
+
     if tela:
-        imagens = conn.execute(
-            'SELECT filename FROM imagens WHERE tela_id = ? ORDER BY id DESC',
-            (tela['id'],)
-        ).fetchall()
-    else:
-        imagens = []
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        imagens = conn.execute("""
+            SELECT imagens.filename
+            FROM imagens
+            JOIN imagem_tela ON imagens.id = imagem_tela.imagem_id
+            WHERE imagem_tela.tela_id = ?
+              AND (imagem_tela.inicio_exibicao IS NULL OR imagem_tela.inicio_exibicao <= ?)
+              AND (imagem_tela.fim_exibicao IS NULL OR imagem_tela.fim_exibicao >= ?)
+            ORDER BY imagens.id DESC
+        """, (tela['id'], agora, agora)).fetchall()
 
     total = len(imagens)
     ultima = imagens[0]['filename'] if imagens else None
     conn.close()
-    
+
     return jsonify({
         'ultimaImagem': ultima,
         'totalImagens': total
@@ -84,16 +102,24 @@ def check_new_images(identificador):
 @app.route('/')
 def painel():
     conn = get_db_connection()
-    tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', ('principal',)).fetchone()
+    tela = conn.execute("SELECT id FROM telas WHERE identificador = 'principal'").fetchone()
     imagens = []
-    if tela:
-        imagens = conn.execute(
-            'SELECT filename FROM imagens WHERE tela_id = ? ORDER BY id DESC',
-            (tela['id'],)
-        ).fetchall()
-    conn.close()
-    return render_template('painel_exibicao.html', imagens=imagens)
 
+    if tela:
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        imagens = conn.execute("""
+            SELECT imagens.filename
+            FROM imagens
+            JOIN imagem_tela ON imagens.id = imagem_tela.imagem_id
+            WHERE imagem_tela.tela_id = ?
+              AND (imagem_tela.inicio_exibicao IS NULL OR imagem_tela.inicio_exibicao <= ?)
+              AND (imagem_tela.fim_exibicao IS NULL OR imagem_tela.fim_exibicao >= ?)
+            ORDER BY imagens.id DESC
+        """, (tela['id'], agora, agora)).fetchall()
+
+    conn.close()
+    return render_template('painel_exibicao.html', imagens=imagens, identificador='principal')
 
 @limiter.limit("5 per minute")
 @app.route('/login', methods=['GET', 'POST'])
@@ -106,7 +132,7 @@ def login():
         user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
 
         if user:
-            # ✅ Verifica se a conta está desativada
+           
             if user['ativo'] == 0:
                 flash("Esta conta está desativada. Contate o administrador.", "danger")
                 conn.close()
@@ -117,14 +143,14 @@ def login():
 
             if bloqueado_until:
                 bloqueado_dt = datetime.strptime(bloqueado_until, "%Y-%m-%d %H:%M:%S")
-                if datetime.utcnow() < bloqueado_dt:
-                    minutos = int((bloqueado_dt - datetime.utcnow()).total_seconds() // 60) + 1
+                if datetime.now() < bloqueado_dt:
+                    minutos = int((bloqueado_dt - datetime.now()).total_seconds() // 60) + 1
                     flash(f'Conta bloqueada por muitas tentativas. Tente novamente em {minutos} minutos.', 'danger')
                     conn.close()
                     return redirect(url_for('login'))
 
             if check_password_hash(user['senha'], senha):
-                # Login correto: resetar tentativas e bloqueio
+            
                 conn.execute('UPDATE users SET tentativas_login = 0, bloqueado_until = NULL WHERE id = ?', (user['id'],))
                 conn.commit()
                 conn.close()
@@ -135,14 +161,14 @@ def login():
                 flash('Logado com sucesso!', 'success')
                 return redirect(url_for('adm'))
             else:
-                # Incrementa tentativas
+               
                 tentativas += 1
                 if tentativas >= 5:
-                    bloqueado_novo = (datetime.utcnow() + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
+                    bloqueado_novo = (datetime.now() + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
                     conn.execute('UPDATE users SET tentativas_login = ?, bloqueado_until = ? WHERE id = ?', (tentativas, bloqueado_novo, user['id']))
                     conn.commit()
 
-                    # Enviar e-mail de alerta
+                   
                     corpo = f"""Olá!
 
 Detectamos 5 tentativas de login malsucedidas na sua conta do Painel Administrativo IFMS ({email}).
@@ -203,50 +229,94 @@ def adm():
         return redirect(url_for('login'))
 
     secao = request.args.get('secao', default='inicio')
+    pagina = int(request.args.get('pagina', 1))
+    pagina = max(1, pagina)
+    por_pagina = 20
+    offset = (pagina - 1) * por_pagina
+
     conn = get_db_connection()
+    agora = datetime.now()
 
-    telas = conn.execute('SELECT * FROM telas').fetchall()
+    conn.execute("""
+        DELETE FROM imagem_tela
+        WHERE fim_exibicao IS NOT NULL AND fim_exibicao < ?
+    """, (agora,))
+    conn.commit()
 
-    tela_principal = conn.execute("SELECT id FROM telas WHERE identificador = 'principal'").fetchone()
-    id_tela_principal = tela_principal['id'] if tela_principal else None
-
+    telas_db = conn.execute('SELECT * FROM telas').fetchall()
+    telas_status = []
     imagens_por_tela = {}
     telas_com_imagens = []
 
-    for tela in telas:
-        imagens = conn.execute('SELECT * FROM imagens WHERE tela_id = ?', (tela['id'],)).fetchall()
+    for tela in telas_db:
+        status = "desligada"
+        if tela['ultimo_ping']:
+            dt_ping = datetime.strptime(tela['ultimo_ping'], "%Y-%m-%d %H:%M:%S")
+            if (agora - dt_ping).total_seconds() < 30:
+                status = "ligada"
+
+        telas_status.append({
+            'id': tela['id'],
+            'nome': tela['nome'],
+            'identificador': tela['identificador'],
+            'status': status
+        })
+
+        imagens = conn.execute("""
+            SELECT imagens.*, imagem_tela.inicio_exibicao, imagem_tela.fim_exibicao
+            FROM imagens
+            JOIN imagem_tela ON imagens.id = imagem_tela.imagem_id
+            WHERE imagem_tela.tela_id = ?
+              AND (imagem_tela.inicio_exibicao IS NULL OR imagem_tela.inicio_exibicao <= ?)
+              AND (imagem_tela.fim_exibicao IS NULL OR imagem_tela.fim_exibicao >= ?)
+        """, (tela['id'], agora, agora)).fetchall()
+
         imagens_por_tela[tela['id']] = imagens
         if imagens:
             telas_com_imagens.append(tela)
 
-    imagens_tela_principal = []
-    if id_tela_principal:
-        imagens_tela_principal = conn.execute(
-            'SELECT * FROM imagens WHERE tela_id = ?', (id_tela_principal,)
-        ).fetchall()
+    imagens_sem_tela = conn.execute("""
+        SELECT imagens.*, imagem_tela.inicio_exibicao, imagem_tela.fim_exibicao
+        FROM imagens
+        LEFT JOIN imagem_tela ON imagens.id = imagem_tela.imagem_id
+        WHERE imagem_tela.imagem_id IS NULL
+           OR (imagem_tela.inicio_exibicao IS NOT NULL AND imagem_tela.inicio_exibicao > ?)
+           OR (imagem_tela.fim_exibicao IS NOT NULL AND imagem_tela.fim_exibicao < ?)
+        LIMIT ? OFFSET ?
+    """, (agora, agora, por_pagina, offset)).fetchall()
 
-    imagens_sem_tela = conn.execute('SELECT * FROM imagens WHERE tela_id IS NULL').fetchall()
+    total_sem_tela = conn.execute("""
+        SELECT COUNT(*) as total
+        FROM imagens
+        LEFT JOIN imagem_tela ON imagens.id = imagem_tela.imagem_id
+        WHERE imagem_tela.imagem_id IS NULL
+           OR (imagem_tela.inicio_exibicao IS NOT NULL AND imagem_tela.inicio_exibicao > ?)
+           OR (imagem_tela.fim_exibicao IS NOT NULL AND imagem_tela.fim_exibicao < ?)
+    """, (agora, agora)).fetchone()['total']
+
+    total_paginas = (total_sem_tela + por_pagina - 1) // por_pagina
+    if pagina > total_paginas and total_paginas > 0:
+        return redirect(url_for('adm', secao='selecionar', pagina=total_paginas))
 
     user = conn.execute('SELECT tipo FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-
     total_imagens = conn.execute('SELECT COUNT(*) as total FROM imagens').fetchone()['total']
-    total_em_exibicao = sum(len(imagens) for imagens in imagens_por_tela.values()) + len(imagens_tela_principal)
-
+    total_em_exibicao = sum(len(imagens) for imagens in imagens_por_tela.values())
     usuarios = conn.execute('SELECT id, email, tipo, ativo FROM users').fetchall()
-
     conn.close()
 
     return render_template('painel_adm.html',
-                           telas=telas,
+                           telas=telas_db,
+                           telas_status=telas_status,
                            imagens_por_tela=imagens_por_tela,
-                           imagens_tela_principal=imagens_tela_principal,
                            imagens_sem_tela=imagens_sem_tela,
                            telas_com_imagens=telas_com_imagens,
                            total_imagens=total_imagens,
                            total_em_exibicao=total_em_exibicao,
                            tipo_usuario=user['tipo'],
                            usuarios=usuarios,
-                           secao=secao)
+                           secao=secao,
+                           pagina=pagina,
+                           total_paginas=total_paginas)
 
 @app.route('/cadastrar_tela', methods=['POST'])
 def cadastrar_tela():
@@ -263,25 +333,30 @@ def cadastrar_tela():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    if 'imagem' not in request.files:
+    if 'imagens' not in request.files:
         return 'Nenhum arquivo enviado', 400
 
-    imagem = request.files['imagem']
-    if imagem.filename == '':
-        return 'Nome de arquivo vazio', 400
-
-    filename = secure_filename(imagem.filename)
-    imagem.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
+    arquivos = request.files.getlist('imagens')
     tela_id_str = request.form.get('tela_id')
     tela_id = int(tela_id_str) if tela_id_str else None
 
     conn = get_db_connection()
-    conn.execute('INSERT INTO imagens (filename, tela_id) VALUES (?, ?)', (filename, tela_id))
+    for imagem in arquivos:
+        if imagem and imagem.filename:
+            filename = secure_filename(imagem.filename)
+            caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            imagem.save(caminho)
+
+            conn.execute('INSERT INTO imagens (filename) VALUES (?)', (filename,))
+            imagem_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+
+            if tela_id:
+                conn.execute('INSERT INTO imagem_tela (imagem_id, tela_id) VALUES (?, ?)', (imagem_id, tela_id))
+
     conn.commit()
     conn.close()
 
-    flash('Imagem enviada com sucesso!', 'success')
+    flash(f'{len(arquivos)} imagem(ns) enviada(s) com sucesso!', 'success')
     return redirect(url_for('adm', secao='upload'))
 
 @app.route('/exibicao/<identificador>')
@@ -289,10 +364,22 @@ def painel_exibicao_por_tela(identificador):
     conn = get_db_connection()
     tela = conn.execute('SELECT id FROM telas WHERE identificador = ?', (identificador,)).fetchone()
     imagens = []
+
     if tela:
-        imagens = conn.execute('SELECT filename FROM imagens WHERE tela_id = ?', (tela['id'],)).fetchall()
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        imagens = conn.execute("""
+            SELECT imagens.filename
+            FROM imagens
+            JOIN imagem_tela ON imagens.id = imagem_tela.imagem_id
+            WHERE imagem_tela.tela_id = ?
+              AND (imagem_tela.inicio_exibicao IS NULL OR imagem_tela.inicio_exibicao <= ?)
+              AND (imagem_tela.fim_exibicao IS NULL OR imagem_tela.fim_exibicao >= ?)
+            ORDER BY imagens.id DESC
+        """, (tela['id'], agora, agora)).fetchall()
+
     conn.close()
-    return render_template('painel_exibicao.html', imagens=imagens)
+    return render_template('painel_exibicao.html', imagens=imagens, identificador=identificador)
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
 def delete_image(image_id):
@@ -361,26 +448,71 @@ def delete_multiple_images():
 
 @app.route('/remover_da_tela/<int:image_id>', methods=['POST'])
 def remover_da_tela(image_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    tela_id = request.form.get('tela_id')
+    if not tela_id:
+        flash('Tela não especificada.', 'danger')
+        return redirect(url_for('adm', secao='upload'))
+
     conn = get_db_connection()
-    conn.execute('UPDATE imagens SET tela_id = NULL WHERE id = ?', (image_id,))
+    conn.execute('DELETE FROM imagem_tela WHERE imagem_id = ? AND tela_id = ?', (image_id, tela_id))
     conn.commit()
     conn.close()
+
     flash('Imagem removida da tela, mas mantida no banco de dados.', 'info')
     return redirect(url_for('adm', secao='upload'))
 
 @app.route('/atribuir_tela', methods=['POST'])
 def atribuir_tela():
     imagem_id = request.form.get('imagem_id')
-    tela_id = request.form.get('tela_id')
+    tela_ids = request.form.getlist('tela_ids')
 
-    if imagem_id and tela_id:
-        conn = get_db_connection()
-        conn.execute('UPDATE imagens SET tela_id = ? WHERE id = ?', (tela_id, imagem_id))
-        conn.commit()
-        conn.close()
-        flash('Imagem atribuída à nova tela com sucesso!', 'success')
-    else:
+    inicio_str = request.form.get('inicio_exibicao')
+    fim_str = request.form.get('fim_exibicao')
+
+    inicio = datetime.strptime(inicio_str, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M:%S") if inicio_str else None
+    fim = datetime.strptime(fim_str, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M:%S") if fim_str else None
+
+    if not imagem_id or not tela_ids:
         flash('Erro ao atribuir tela. Dados incompletos.', 'danger')
+        return redirect(url_for('adm', secao='selecionar'))
+
+    if inicio and fim:
+        try:
+            inicio_dt = datetime.strptime(inicio, "%Y-%m-%d %H:%M:%S")
+            fim_dt = datetime.strptime(fim, "%Y-%m-%d %H:%M:%S")
+            if inicio_dt > fim_dt:
+                flash('A data/hora de início deve ser anterior à de término.', 'danger')
+                return redirect(url_for('adm', secao='selecionar'))
+        except ValueError:
+            flash('Formato de data/hora inválido.', 'danger')
+            return redirect(url_for('adm', secao='selecionar'))
+
+    conn = get_db_connection()
+    atribuicoes = 0
+
+    for tela_id in tela_ids:
+        existente = conn.execute("""
+            SELECT id FROM imagem_tela
+            WHERE imagem_id = ? AND tela_id = ?
+        """, (imagem_id, tela_id)).fetchone()
+
+        if not existente:
+            conn.execute("""
+                INSERT INTO imagem_tela (imagem_id, tela_id, inicio_exibicao, fim_exibicao)
+                VALUES (?, ?, ?, ?)
+            """, (imagem_id, tela_id, inicio, fim))
+            atribuicoes += 1
+
+    conn.commit()
+    conn.close()
+
+    if atribuicoes > 0:
+        flash(f'Imagem atribuída a {atribuicoes} tela(s) com sucesso!', 'success')
+    else:
+        flash('A imagem já estava atribuída às telas selecionadas.', 'warning')
 
     return redirect(url_for('adm', secao='selecionar'))
 
@@ -535,6 +667,27 @@ def alterar_senha(token):
     conn.close()
     return render_template('redefinir_senha.html', email=email)
 
+@app.route('/deletar_tela/<int:tela_id>', methods=['POST'])
+def deletar_tela(tela_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    senha_digitada = request.form.get('senha_confirmacao')
+    conn = get_db_connection()
+
+    senha = conn.execute('SELECT senha FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    if not senha or not check_password_hash(senha['senha'], senha_digitada):
+        conn.close()
+        flash('Senha incorreta. A tela não foi removida.', 'danger')
+        return redirect(url_for('adm', secao='identificar'))
+
+    conn.execute('DELETE FROM imagem_tela WHERE tela_id = ?', (tela_id,))
+    conn.execute('DELETE FROM telas WHERE id = ?', (tela_id,))
+    conn.commit()
+    conn.close()
+
+    flash('Tela excluída com sucesso.', 'success')
+    return redirect(url_for('adm', secao='identificar'))
 
 @app.route('/logout')
 def logout():

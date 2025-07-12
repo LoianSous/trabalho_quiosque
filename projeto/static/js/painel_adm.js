@@ -90,20 +90,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (fileInput && fileName && placeholder) {
     fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) {
-        const nome = fileInput.files[0].name;
+      const arquivos = Array.from(fileInput.files);
+
+      if (arquivos.length > 0) {
         placeholder.style.display = "none";
         fileName.style.display = "block";
-        fileName.textContent = `Imagem selecionada: ${nome}`;
+
+        if (arquivos.length === 1) {
+          fileName.textContent = `Imagem selecionada: ${arquivos[0].name}`;
+        } else {
+          const nomes = arquivos.map(arquivo => `• ${arquivo.name}`).join('\n');
+          fileName.innerHTML = `Imagens selecionadas:<br><pre>${nomes}</pre>`;
+        }
+      } else {
+        placeholder.style.display = "block";
+        fileName.style.display = "none";
+        fileName.textContent = '';
       }
     });
   }
 });
 
 const TEMPO_SESSAO_MINUTOS = 10;
-const AVISO_MINUTOS = 5;  
+const AVISO_MINUTOS = 5;
 
-let tempoRestante = TEMPO_SESSAO_MINUTOS * 60; 
+let tempoRestante = TEMPO_SESSAO_MINUTOS * 60;
 let avisoEmitido = false;
 
 const intervalo = setInterval(() => {
@@ -119,7 +130,7 @@ const intervalo = setInterval(() => {
     alert("Sua sessão expirou por inatividade. Você será redirecionado para o login.");
     window.location.href = "/logout";
   }
-}, 1000); 
+}, 1000);
 
 document.addEventListener("DOMContentLoaded", () => {
   const toasts = document.querySelectorAll(".toast");
@@ -135,42 +146,42 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function abrirModal(acao, url, mensagem, valorAtivo = null) {
-    const form = document.getElementById("confirmForm");
-    form.action = url;
+  const form = document.getElementById("confirmForm");
+  form.action = url;
 
-    document.getElementById("modalTitle").textContent = acao;
-    document.getElementById("modalMessage").textContent = mensagem;
+  document.getElementById("modalTitle").textContent = acao;
+  document.getElementById("modalMessage").textContent = mensagem;
 
-    const campoAtivo = document.getElementById("campoAtivo");
+  const campoAtivo = document.getElementById("campoAtivo");
 
-    form.querySelectorAll('input[name="ids[]"]').forEach(el => el.remove());
+  form.querySelectorAll('input[name="ids[]"]').forEach(el => el.remove());
 
-    if (valorAtivo !== null && campoAtivo) {
-        campoAtivo.name = "ativo";
-        campoAtivo.value = valorAtivo;
-    } else if (campoAtivo) {
-        campoAtivo.removeAttribute("name");
-        campoAtivo.removeAttribute("value");
+  if (valorAtivo !== null && campoAtivo) {
+    campoAtivo.name = "ativo";
+    campoAtivo.value = valorAtivo;
+  } else if (campoAtivo) {
+    campoAtivo.removeAttribute("name");
+    campoAtivo.removeAttribute("value");
+  }
+
+  if (acao.toLowerCase().includes("imagem")) {
+    const selecionados = Array.from(document.querySelectorAll('input[name="ids[]"]:checked'));
+
+    if (selecionados.length === 0) {
+      alert("Nenhuma imagem selecionada.");
+      return;
     }
 
-    if (acao.toLowerCase().includes("imagem")) {
-        const selecionados = Array.from(document.querySelectorAll('input[name="ids[]"]:checked'));
+    selecionados.forEach(cb => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "ids[]";
+      input.value = cb.value;
+      form.appendChild(input);
+    });
+  }
 
-        if (selecionados.length === 0) {
-            alert("Nenhuma imagem selecionada.");
-            return;
-        }
-
-        selecionados.forEach(cb => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "ids[]";
-            input.value = cb.value;
-            form.appendChild(input);
-        });
-    }
-
-    document.getElementById("confirmacaoModal").classList.add("is-active");
+  document.getElementById("confirmacaoModal").classList.add("is-active");
 }
 
 function fecharModal() {
@@ -179,15 +190,25 @@ function fecharModal() {
 
 let todosSelecionados = false;
 
-    function toggleSelecionarTodos() {
-        const checkboxes = document.querySelectorAll('input[name="ids[]"]');
-        todosSelecionados = !todosSelecionados;
+function toggleSelecionarTodos() {
+  const checkboxes = document.querySelectorAll('input[name="ids[]"]');
+  todosSelecionados = !todosSelecionados;
 
-        checkboxes.forEach(cb => cb.checked = todosSelecionados);
+  checkboxes.forEach(cb => cb.checked = todosSelecionados);
 
-        const botao = document.querySelector('button[onclick="toggleSelecionarTodos()"]');
-        botao.innerHTML = todosSelecionados
-            ? '<i class="fas fa-times-circle mr-1"></i> Deselecionar tudo'
-            : '<i class="fas fa-check-square mr-1"></i> Selecionar tudo';
+  const botao = document.querySelector('button[onclick="toggleSelecionarTodos()"]');
+  botao.innerHTML = todosSelecionados
+    ? '<i class="fas fa-times-circle mr-1"></i> Deselecionar tudo'
+    : '<i class="fas fa-check-square mr-1"></i> Selecionar tudo';
+}
+
+const checkboxesSelecionar = document.querySelectorAll('.selecao-tela input.selecionar-checkbox');
+
+checkboxesSelecionar.forEach(checkbox => {
+  checkbox.addEventListener('change', () => {
+    const card = checkbox.closest('.selecao-tela');
+    if (card) {
+      card.classList.toggle('selecionado', checkbox.checked);
     }
-
+  });
+});
